@@ -1,0 +1,196 @@
+# Foundations of GNSS Post-Processing for Field Researchers {#sec-foundations}
+
+::: {.callout-note}
+### Purpose of this Chapter
+This chapter establishes the core geodetic and spatial concepts required to post-process GNSS observations acquired in Brazil. If you are an ecologist, geographer, or environmental scientist who has collected GNSS data with an Emlid Reach receiver and needs to convert raw field logs into publishable, centimeter-accurate coordinates, this chapter provides the theoretical foundation you need before opening any software.
+:::
+
+## Why Post-Process GNSS Data?
+
+When a standalone GNSS receiver (such as an Emlid Reach RS2, a handheld GPS, or a smartphone) tracks satellite signals in the field, its real-time autonomous positioning error is typically **2 to 5 meters**. This error stems from several physical phenomena:
+
+1. **Satellite Clock and Orbit Errors:** Minor inaccuracies in satellite onboard atomic clocks and broadcast ephemerides (orbital positions).
+2. **Atmospheric Delays:** Signal refraction and delay as radio waves pass through the ionosphere (electrically charged layer) and the troposphere (temperature, pressure, and water vapor gradients).
+3. **Multipath Interference:** Signals bouncing off water surfaces, tree trunks, canopy foliage, or vehicles before reaching the antenna.
+4. **Receiver Noise:** Internal thermal noise and hardware biases inside the antenna and receiver board.
+
+In remote field campaigns—such as neotropical wetland surveys or remote Amazonian floodplains—cellular internet connectivity is often nonexistent. This makes **Real-Time Kinematic (RTK)** corrections via NTRIP impossible. 
+
+**Post-processing** solves this problem by recording raw satellite carrier phase and pseudorange measurements continuously to internal memory. Back in the office or basecamp, these raw logs are mathematically combined with precise satellite orbital data or reference station observations to eliminate common atmospheric and orbital errors, achieving **sub-decimeter or centimeter-level precision**.
+
+```{mermaid}
+flowchart TD
+    subgraph Raw Field Data
+        A[Emlid Reach RS2 Raw Log<br/>.UBX or .RINEX]
+    end
+
+    subgraph Office Post-Processing Pathways
+        A -->|Pathway 1: Differential / Relative| B(PPK in Emlid Studio)
+        A -->|Pathway 2: Autonomous / Absolute| C(Precise Point Positioning)
+    end
+
+    subgraph Pathway 1 Requirements
+        D[IBGE RBMC Base Station<br/>24h RINEX .obs + .nav] --> B
+        B --> E[Centimeter Baseline Solution<br/>Fix/Float .pos]
+    end
+
+    subgraph Pathway 2 Requirements
+        C --> F[RTKCONV Decimation to 30s<br/>Clean RINEX]
+        F --> G[IBGE PPP Online Service<br/>CSRS-PPP Engine + Precise Ephemeris]
+        G --> H[Absolute Geodetic Coordinates<br/>SIRGAS2000 PDF Report + .pos]
+    end
+
+    style A fill:#e1f5fe,stroke:#0288d1,stroke-width:2px
+    style B fill:#e8f5e9,stroke:#388e3c,stroke-width:2px
+    style C fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    style E fill:#c8e6c9,stroke:#2e7d32,stroke-width:2px
+    style H fill:#ffe0b2,stroke:#ef6c00,stroke-width:2px
+```
+
+---
+
+## Two Fundamental Post-Processing Pathways: PPK vs. PPP
+
+As illustrated above, there are two distinct post-processing strategies:
+
+### Post-Processed Kinematic (PPK) / Relative Positioning
+
+In PPK, two GNSS receivers record satellite signals simultaneously:
+* A stationary **Base Station** placed over a known, permanent geodetic monument (e.g., an IBGE RBMC station) or a local benchmark.
+* A moving or temporary **Rover** (your Emlid Reach RS2) collecting points or tracks across your study area.
+
+Because both receivers are tracking the same satellites through approximately the same column of atmosphere (assuming baseline distances under 30–50 km), differencing the carrier phase observations (Double-Differencing) cancels out satellite clock errors, satellite orbit errors, and the vast majority of atmospheric delays.
+
+* **Primary Strength:** Extremely high relative accuracy (1–2 cm horizontal) with relatively short observation times (seconds to minutes for a point).
+* **Limitation:** Accuracy degrades as the distance (baseline) between the base station and rover increases. If the nearest RBMC station is 150 km away, ionospheric differences between base and rover can prevent the integer carrier-phase ambiguities from resolving to a "Fixed" solution.
+
+### Precise Point Positioning (PPP) / Absolute Positioning
+
+PPP does not require a local base station. Instead, a single receiver operates autonomously over an extended period (typically at least 1 to 4 hours of static recording). The raw RINEX file is sent to an automated geodetic processing engine (such as the **IBGE PPP** service in Brazil, powered by Natural Resources Canada's CSRS-PPP).
+
+The PPP engine applies:
+* **Precise Satellite Orbits and Clocks:** Post-computed satellite trajectories and clock corrections determined globally by the International GNSS Service (IGS).
+* **Atmospheric Modeling:** Sophisticated global ionospheric maps and tropospheric zenith path delay estimations.
+* **Geodynamic Corrections:** Solid Earth tides, ocean tide loading, and polar motion.
+
+* **Primary Strength:** Operates anywhere on Earth regardless of proximity to base stations—ideal for remote wilderness areas.
+* **Limitation:** Requires long occupation times (minimum 1–2 hours for decimeter accuracy; 4–12 hours for 1–2 cm accuracy) while the filter converges.
+
+---
+
+## The Brazilian Geodetic Reference Frame: SIRGAS2000
+
+All legal spatial data, environmental licenses, land tenure records, and geodetic coordinates in Brazil must conform to the **Sistema de Referência Geocêntrico para as Américas (SIRGAS2000)**, officially adopted by IBGE in Presidential Decree No. 5.334/2005.
+
+### Geodetic Parameters of SIRGAS2000
+
+* **Reference Ellipsoid:** GRS80 (Geodetic Reference System 1980).
+  * Semi-major axis ($a$): $6,378,137.0\text{ m}$
+  * Flattening ($1/f$): $298.257222101$
+* **Coordinate Type:** Geocentric Cartesian $(X, Y, Z)$ or Geodetic Geographic $(\phi \text{ [Latitude]}, \lambda \text{ [Longitude]}, h \text{ [Ellipsoidal Height]})$.
+
+::: {.callout-important}
+### SIRGAS2000 vs. WGS84: Are They the Same?
+For low-accuracy mapping (handheld GPS or consumer smartphones with 3–5 m error), SIRGAS2000 and WGS84 are practically interchangeable because the GRS80 ellipsoid differs from the WGS84 ellipsoid by less than $0.1\text{ mm}$ in semi-minor axis.
+
+However, for **centimeter-level geodetic science**, they are **not identical**:
+1. WGS84 coordinates broadcast by GPS satellites are tied to dynamic realizations of the International Terrestrial Reference Frame (ITRF) at the **current epoch of observation**.
+2. SIRGAS2000 is a plate-fixed reference frame whose official Brazilian coordinates are referenced to the **canonical epoch 2000.4 (2000-05-26)**.
+3. Due to South American tectonic plate motion (drifting approximately $1.5\text{ to }2.5\text{ cm/year}$ northeastward), a coordinate measured today in ITRF/WGS84 will differ from its official SIRGAS2000 (epoch 2000.4) coordinates by **30 to 50 centimeters**!
+
+When you submit data to IBGE PPP, the service automatically computes coordinates in both:
+* **SIRGAS2000 at the Epoch of Measurement** (reflecting where the physical monument was located on the day of survey).
+* **SIRGAS2000 at Epoch 2000.4** (projected back using the official velocity model VEMOS, required for legal registration and comparison with official IBGE cartography).
+:::
+
+---
+
+## Vertical Datums: Ellipsoidal ($h$) vs. Orthometric ($H$) Heights
+
+One of the most frequent errors encountered in graduate theses and research papers is confounding **ellipsoidal height** with **orthometric height**. This distinction is especially critical in hydrologic, coastal, and wetland studies where water flows according to gravity, not mathematical ellipsoids.
+
+```{mermaid}
+flowchart LR
+    subgraph Terrain
+        T[Topographic Surface / Ground Mark]
+    end
+
+    subgraph Reference Surfaces
+        E[GRS80 Ellipsoid: Mathematical reference surface]
+        G[Geoid: Equipotential gravity surface / Mean Sea Level]
+    end
+
+    T -. "Ellipsoidal Height (h)" .-> E
+    T -. "Orthometric Height (H)" .-> G
+    G -. "Geoid Undulation (N)" .-> E
+```
+
+### Mathematical Definitions
+
+1. **Ellipsoidal Height ($h$):** The geometric distance measured along the normal vector perpendicular to the reference ellipsoid (GRS80) up to the point of interest. GNSS receivers natively calculate $h$.
+2. **Orthometric Height ($H$):** The physical distance measured along the plumb line (gravity line) from the **geoid** (equipotential gravity surface approximating global mean sea level) to the point of interest. This is what surveyors call "elevation above sea level" ($H$).
+3. **Geoid Undulation / Separation ($N$):** The vertical distance between the reference ellipsoid and the geoid at a given horizontal coordinate:
+
+$$\Large h = H + N \quad \Longleftrightarrow \quad H = h - N$$
+
+In Brazil:
+* The vertical datum origin for mainland Brazil is the **Imbituba Tide Gauge** (Santa Catarina).
+* For the state of Amapá, the historical origin is the **Santana Tide Gauge**.
+* To convert GNSS-derived ellipsoidal height ($h$) to official orthometric height ($H$), IBGE maintains the official national geoidal model: **MAPGEO2015** (and the updated **hgeoHNOR2020**).
+
+::: {.callout-tip}
+### Rule of Thumb for Elevation in Field Work
+Never report raw heights straight from Emlid Studio without checking the datum setting. Emlid Studio outputs ellipsoidal height ($h$) by default unless a local geoid grid model is configured. When using IBGE PPP, the service automatically reports both $h$ (ellipsoidal) and $H$ (orthometric via MAPGEO2015).
+:::
+
+---
+
+## Antenna Geometry: ARP, APC, and Phase Center Offsets
+
+A GNSS receiver does not measure coordinates at the physical tip of its antenna pole or the base of its brass mount. The measurement is recorded at an intangible internal point called the **Antenna Phase Center (APC)**.
+
+Understanding antenna height offsets is vital to ensuring that your calculated coordinates represent the actual ground monument.
+
+```{mermaid}
+classDiagram
+    class ReceiverGeometry {
+        +Antenna Phase Center [APC]
+        +Antenna Reference Point [ARP]
+        +Ground Mark / Monument
+    }
+```
+
+```
+       [   Emlid Reach RS2   ]  <-- Top of receiver
+             *  APC  *          <-- Antenna Phase Center (electrical signal reception point)
+             |
+             | Antenna Phase Center Offset (PCO) = 134 mm (0.134 m)
+             |
+       [==== ARP ====]          <-- Antenna Reference Point (bottom 5/8" threaded socket)
+             |
+             |
+             | Pole Height (e.g., 2.000 m survey pole or tripod measurement)
+             |
+             |
+             V
+       =============            <-- Ground Mark / Benchmark
+```
+
+### Key Reference Definitions
+
+1. **Ground Mark (Monument):** The physical marker on the Earth's surface (brass pin, concrete pillar, iron rod, or stake) whose coordinates you wish to determine.
+2. **Antenna Reference Point (ARP):** A clearly identifiable physical point on the exterior receiver casing to which physical measurements are taken. For the Emlid Reach RS2, the ARP is the **bottom of the 5/8" threaded mount**.
+3. **Antenna Phase Center (APC):** The theoretical point in space where the radio signal phase is measured. The APC varies slightly depending on satellite elevation, azimuth, and frequency (L1 vs. L2), known as Phase Center Variation (PCV).
+4. **Phase Center Offset (PCO):** The fixed physical distance between the ARP and the average APC.
+
+### Emlid Reach RS2 Antenna Offsets
+
+For the Emlid Reach RS2 / RS2+:
+* **L1 / L2 Phase Center Height Offset ($z$):** **$+0.134\text{ m}$ ($134\text{ mm}$)** vertically above the ARP.
+* **Horizontal Offsets ($x, y$):** $0.000\text{ m}$ (centered over the mount).
+
+::: {.callout-important}
+### Software Responsibility for Antenna Offsets
+* **In Emlid Studio:** When you select "Reach RS2" as the antenna model in Emlid Studio and enter a pole height of `2.00 m`, the software automatically knows to measure from the ground mark to the ARP, adding the internal $0.134\text{ m}$ PCO in the background.
+* **In RTKlib / IBGE PPP:** When preparing RINEX files for IBGE PPP, you must understand whether the antenna field in the RINEX header records height to the **ARP** or the **APC**. The IBGE PPP service requires the height entered in its submission form to be the height to the **Antenna Reference Point (ARP)**, and it applies its own internal NGS antenna calibration table for the selected antenna model.
+:::

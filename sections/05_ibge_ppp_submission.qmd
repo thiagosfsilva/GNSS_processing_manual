@@ -1,0 +1,229 @@
+# Submitting to IBGE PPP and Interpreting Geodetic Reports {#sec-ibge-ppp}
+
+::: {.callout-note}
+### Purpose of this Chapter
+This chapter guides you through submitting your prepared 30-second RINEX observation file to the **IBGE PPP (Posicionamento por Ponto Preciso)** online service and rigorously interpreting the resulting geodetic report. You will learn how to configure the submission parameters, decode the SIRGAS2000 coordinates across measurement and canonical epochs, extract official orthometric elevations derived from MAPGEO2015, and assess whether the solution meets academic publication standards.
+:::
+
+## What is IBGE PPP?
+
+**IBGE PPP** is a free, automated geodetic positioning service provided by the Brazilian Institute of Geography and Statistics. The computational engine running behind IBGE PPP is the world-renowned **CSRS-PPP**, developed by the Geodetic Survey Division of **Natural Resources Canada (NRCan)**, adapted specifically to integrate with the **Brazilian Geodetic System (SGB)** and the **SIRGAS2000** spatial reference frame.
+
+```{mermaid}
+flowchart TD
+    subgraph User Input
+        A[30s Decimated RINEX File<br/>From Reach RS2 / RTKCONV]
+    end
+
+    subgraph IBGE Processing Server
+        B[IBGE PPP Web Portal<br/>Mode: Estático]
+        C[IGS Precise Ephemeris<br/>Final or Rapid Orbits + Clocks]
+        D[CSRS-PPP Geodetic Engine<br/>Ionosphere Free Linear Combination]
+        E[MAPGEO2015 Geoid Model<br/>Ellipsoidal h to Orthometric H]
+        F[VEMOS Crustal Velocity Model<br/>Epoch of Survey to Epoch 2000.4]
+    end
+
+    subgraph Final Deliverables
+        G[Results ZIP Package]
+        H[Summary PDF Report<br/>SIRGAS2000 Coordinates & Precisions]
+        I[Position File .pos<br/>Kinematic/Epoch Track]
+    end
+
+    A --> B
+    B --> D
+    C --> D
+    D --> E
+    D --> F
+    E --> G
+    F --> G
+    G --> H
+    G --> I
+```
+
+---
+
+## Timing Your Submission: Satellite Ephemeris Tiers
+
+The accuracy of PPP depends directly on the quality of satellite orbit and clock products published by the International GNSS Service (IGS):
+
+| Ephemeris Tier | Publication Delay | Typical 3D Accuracy (Static 4h) | Recommended Use Case |
+|---|---|---|---|
+| **Ultra-Rapid (`IGU`)** | Real-time / 3–9 hours | Decimeter ($10\text{ to }20\text{ cm}$) | Quick field sanity check. |
+| **Rapid (`IGR`)** | **17 to 24 hours** | Centimeter ($2\text{ to }5\text{ cm}$) | Standard research analysis. |
+| **Final (`IGS`)** | **12 to 14 days** | **Millimeter to Centimeter ($1\text{ to }2\text{ cm}$)** | **Publication-standard benchmarks & permanent monuments.** |
+
+::: {.callout-tip}
+### When Should You Submit?
+Do not submit your field logs to IBGE PPP immediately on the day of your survey unless you only need a rough check. **Wait at least 24 hours** so the service can apply IGS **Rapid** orbits, or **wait two weeks** after your field campaign to process against IGS **Final** orbits for publication-grade coordinates.
+:::
+
+---
+
+## Step-by-Step Submission Walkthrough
+
+### Step 1: Accessing the Portal
+
+Open your browser and navigate to the official IBGE PPP submission page:
+
+> **IBGE PPP Web Service:**  
+> [https://www.ibge.gov.br/geociencias/informacoes-sobre-posicionamento-geodesico/servicos-online-para-posicionamento/16281-servico-online-para-posicionamento-por-ponto-preciso.html](https://www.ibge.gov.br/geociencias/informacoes-sobre-posicionamento-geodesico/servicos-online-para-posicionamento/16281-servico-online-para-posicionamento-por-ponto-preciso.html)
+
+Click **Acessar o serviço** (Access Service).
+
+---
+
+### Step 2: Filling in the Online Form
+
+```
++-------------------------------------------------------------------------+
+| IBGE - SERVIÇO ONLINE DE POSICIONAMENTO POR PONTO PRECISO               |
++-------------------------------------------------------------------------+
+| E-mail do usuário:        [ researcher@university.edu                 ] |
+| Modo de Processamento:    (o) Estático           ( ) Cinemático         |
+| Tipo de Receptor:         [ EMLID REACH RS2                           ] |
+| Modelo da Antena:         [ ADVNULLANTENNA      NONE                  ] |
+| Altura da Antena (m):     [ 2.134                                     ] |
+| Tipo de Medição:          (o) Vertical           ( ) Inclinada          |
+| Arquivo de Observação:    [ Escolher arquivo: rover_30s.26o         ] |
++-------------------------------------------------------------------------+
+| [ Processar ]                                                           |
++-------------------------------------------------------------------------+
+```
+
+Configure the fields as follows:
+
+1. **E-mail do usuário (User Email):**
+   * Enter your active academic email address. IBGE sends the completed processing notification, summary report, and download link to this address.
+2. **Modo de Processamento (Processing Mode):**
+   * Select **Estático (Static)**.
+   * *Note:* Use "Cinemático" only if your Reach RS2 was continuously moving during data collection.
+3. **Tipo de Receptor (Receiver Type):**
+   * Select or type `EMLID REACH RS2` (or leave default if auto-detected from the RINEX header).
+4. **Modelo da Antena (Antenna Model):**
+   * Check if `EML_REACH_RS2 NONE` appears in the antenna selection dropdown.
+   * If `EML_REACH_RS2` is present, select it.
+   * If `EML_REACH_RS2` is not listed in the IBGE dropdown, select **`ADVNULLANTENNA NONE`** (generic null antenna).
+5. **Altura da Antena (Antenna Height):**
+   * The height entered here must be measured vertically from the physical ground mark to the **Antenna Reference Point (ARP)**.
+   * **If `EML_REACH_RS2` is selected:** Enter your measured survey pole/tripod height (e.g., `2.000` m). The IBGE calibration table will apply the internal $0.134\text{ m}$ phase center offset automatically.
+   * **If `ADVNULLANTENNA` is selected:** A null antenna has no internal offset table ($0\text{ mm}$). You must manually add the Reach RS2 phase center offset ($0.134\text{ m}$) to your measured pole height ($2.000 + 0.134 = \mathbf{2.134\text{ m}}$) so that your final coordinates represent the ground marker!
+6. **Tipo de Medição (Measurement Type):**
+   * Select **Vertical** (height measured straight along the plumb line).
+7. **Arquivo de Observação (Observation File):**
+   * Click **Choose File** and select your 30-second decimated RINEX file (e.g., `rover_30s.26o` or a `.zip` containing it).
+8. Click **Processar** (Process).
+
+---
+
+### Step 3: Retrieving Results
+
+The browser redirects to a confirmation page displaying a real-time progress monitor:
+1. File upload and integrity check.
+2. Atmospheric model and ephemeris matching.
+3. Least-squares / Kalman filter convergence.
+4. Final PDF and coordinate package generation.
+
+Once processing completes (typically 30 seconds to 2 minutes), a direct download link appears, and an email is delivered with the attached results archive (`.zip`).
+
+---
+
+## Decoding the IBGE PPP PDF Report
+
+Extract the downloaded ZIP file. The primary deliverable is the executive geodetic summary: `[filename].pdf`.
+
+Below is an annotated breakdown of each critical section of the IBGE report:
+
+### Section 1: Processing Metadata
+
+```
+========================================================================
+RESULTADOS DO PROCESSAMENTO - IBGE PPP
+========================================================================
+Arquivo de Observação:        rover_30s.26o
+Início do Rastreio:           2026-03-16 12:05:00.00 UTC
+Fim do Rastreio:              2026-03-16 16:05:00.00 UTC
+Duração do Rastreio:          04h 00m 00s
+Intervalo de Coleta:          30.0 s
+Órbitas Utilizadas:           IGS Final (ou IGR Rápida)
+========================================================================
+```
+* **Duração (Duration):** Confirms total static occupation time. For centimeter precision, ensure duration is $\ge 2\text{ to }4\text{ hours}$.
+* **Órbitas (Orbits):** Confirms whether `Final` or `Rápida` orbits were applied.
+
+---
+
+### Section 2: Coordinates in SIRGAS2000 (Measurement Epoch vs. Epoch 2000.4)
+
+The report presents coordinates in two distinct reference epochs:
+
+```
+========================================================================
+COORDENADAS GEODÉSICAS (SISTEMA DE REFERÊNCIA: SIRGAS2000)
+========================================================================
+1. NA ÉPOCA DA COLETA (2026-03-16):
+   Latitude (phi):     -03° 08' 24.12845" S  +/- 0.006 m
+   Longitude (lambda): -60° 05' 42.89120" W  +/- 0.008 m
+   Altitude Elipsoidal (h):  84.312 m        +/- 0.015 m
+
+2. NA ÉPOCA OFICIAL SIRGAS2000 (2000.4):
+   Latitude (phi):     -03° 08' 24.11620" S  +/- 0.006 m
+   Longitude (lambda): -60° 05' 42.90240" W  +/- 0.008 m
+   Altitude Elipsoidal (h):  84.310 m        +/- 0.015 m
+========================================================================
+```
+
+::: {.callout-important}
+### Which Coordinates Should You Use in Your Thesis or Paper?
+* **Use Epoch 2000.4** if you are integrating your GNSS data with official Brazilian cartography, INCRA land registries, IBGE vector layers, or comparing against historical benchmarks.
+* **Use Epoch of Collection** if you are conducting precise real-time kinematic velocity studies or calculating baseline vectors directly with local instruments measured in the same week.
+* Always explicitly state the reference epoch in your methods section (e.g., *"Coordinates were determined in SIRGAS2000 (epoch 2000.4) via IBGE PPP"*).
+:::
+
+---
+
+### Section 3: Physical Elevation (Orthometric Height via MAPGEO2015)
+
+Directly beneath the geodetic coordinates, the report provides the vertical datum solution:
+
+```
+========================================================================
+ALTITUDE ORTOMÉTRICA (REFERÊNCIA VERTICAL: IMBITUBA / MAPGEO2015)
+========================================================================
+Altitude Elipsoidal (h):     84.310 m
+Ondulação Geoidal (N):       28.450 m  (Modelo MAPGEO2015)
+Altitude Ortométrica (H):    55.860 m  (H = h - N)
+========================================================================
+```
+
+* **Altitude Elipsoidal ($h$):** The raw geometric height above the GRS80 ellipsoid ($84.310\text{ m}$).
+* **Ondulação Geoidal ($N$):** The geoid separation interpolated from the official IBGE national geoid model MAPGEO2015 ($+28.450\text{ m}$).
+* **Altitude Ortométrica ($H$):** Your true ground elevation above mean sea level ($55.860\text{ m}$). **This is the elevation to report for hydrologic, ecological, and topographical research.**
+
+---
+
+### Section 4: Precision and Confidence Metrics
+
+The final table of the report provides 95% formal confidence intervals ($\approx 2\sigma$):
+
+```
+========================================================================
+PRECISÃO FORMAL (NÍVEL DE CONFIANÇA DE 95%)
+========================================================================
+Sigma Latitude (Norte):      0.006 m  (6 mm)
+Sigma Longitude (Leste):     0.008 m  (8 mm)
+Sigma Altitude (Vertical):   0.015 m  (15 mm)
+========================================================================
+```
+
+### Publication Acceptance Thresholds
+
+How do you know if your static PPP result is good enough to publish?
+
+| Parameter | Excellent (Publishable Geodetic Control) | Acceptable (Environmental Mapping) | Suspect (Re-survey Required) |
+|---|---|---|---|
+| **Static Duration** | $> 4\text{ hours}$ | $2\text{ to }4\text{ hours}$ | $< 1.5\text{ hours}$ |
+| **Horizontal 95% Error** | $< 0.015\text{ m}$ ($1.5\text{ cm}$) | $0.015\text{ to }0.050\text{ m}$ | $> 0.050\text{ m}$ ($5\text{ cm}$) |
+| **Vertical 95% Error** | $< 0.030\text{ m}$ ($3.0\text{ cm}$) | $0.030\text{ to }0.080\text{ m}$ | $> 0.080\text{ m}$ ($8\text{ cm}$) |
+| **Carrier Phase Residual RMS**| $< 0.010\text{ m}$ | $0.010\text{ to }0.020\text{ m}$ | $> 0.025\text{ m}$ (Severe multipath) |
+
+If your results fall within the "Excellent" or "Acceptable" tiers, your coordinates can serve as a dependable local base station for subsequent PPK surveying across your field site.

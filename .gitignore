@@ -1,0 +1,28 @@
+# Git ignore rules for GNSS Post-Processing Manual
+
+# Raw GNSS binaries and high-volume observation data (Zone C)
+*.ubx
+*.obs
+*.rnx
+*.crx
+*.crx.gz
+*.[0-9][0-9][odnpgODNPG]
+*.[0-9][0-9][odnpgODNPG].*
+*.zip
+*.tar.gz
+*.7z
+
+# Quarto build output and cache
+/.quarto/
+/_site/
+
+# Windows / OS artifacts
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Scratch and temp directories
+scratch/
+tmp/
+temp/

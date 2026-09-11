@@ -1,0 +1,213 @@
+# Downloading and Preparing IBGE RBMC Reference Station Data {#sec-ibge-rbmc}
+
+::: {.callout-note}
+### Purpose of this Chapter
+To post-process field data collected with your Emlid Reach RS2 in PPK mode, you require simultaneous GNSS observations recorded by a stationary, highly accurate reference station. In Brazil, this reference data is provided free of charge by the **Rede Brasileira de Monitoramento Contínuo dos Sistemas GNSS (RBMC)**, operated by IBGE. 
+
+This chapter explains how to find the right station, retrieve the correct 24-hour observation and navigation files, interpret the official station description report, and decompress the specialized Hatanaka-compressed files so that Emlid Studio can read them.
+:::
+
+## Overview of the IBGE RBMC Network
+
+The **RBMC** is the backbone of the Brazilian Geodetic System (SGB). It consists of more than 140 permanently operating, geodetic-grade GNSS tracking stations distributed across all Brazilian states and ecological biomes.
+
+```{mermaid}
+flowchart LR
+    A[IBGE Continuous Station<br/>Choke-ring Antenna + Geodetic Receiver] -->|Tracks 24/7| B[Raw Continuous Observations<br/>GPS, GLONASS, Galileo, BeiDou]
+    B -->|Daily Midnight UTC Chunking| C[Daily RINEX Files<br/>30-second interval]
+    C -->|Hatanaka Compression| D[GeoFTP Server<br/>geoftp.ibge.gov.br]
+    D -->|Download by Field Researcher| E[Local Project Directory<br/>Decompressed with CRX2RNX]
+```
+
+Each RBMC station tracks multi-frequency satellite signals 24 hours a day, 365 days a year. Every day at 00:00:00 UTC, the daily dataset is packaged, compressed using the Hatanaka algorithm, and published to IBGE's public geodetic repository.
+
+---
+
+## Finding the Nearest RBMC Station
+
+The baseline distance between your field survey site and the RBMC station determines your processing success:
+
+| Baseline Distance | Feasibility for Reach RS2 PPK | Typical Ambiguity Resolution |
+|---|---|---|
+| **0 – 30 km** | **Optimal** | Fast Fix (within minutes), centimeter-level accuracy |
+| **30 – 60 km** | **Good** | Fix achievable with 30–60+ minutes of continuous tracking |
+| **60 – 100 km** | **Challenging** | Requires long static occupations (1–3 hours); partial Float |
+| **> 100 km** | **Not recommended for PPK** | Ionospheric divergence prevents Fix; **use IBGE PPP instead** |
+
+### Step 1: Identifying Stations via the IBGE Interactive Map
+
+1. Navigate to the official IBGE Geodesy portal:  
+   [https://www.ibge.gov.br/geociencias/informacoes-sobre-posicionamento-geodesico/rbmc/rede-brasileira-de-monitoramento-continuo.html](https://www.ibge.gov.br/geociencias/informacoes-sobre-posicionamento-geodesico/rbmc/rede-brasileira-de-monitoramento-continuo.html)
+2. Open the **Rede RBMC Interativa** map viewer.
+3. Locate your field study area and identify the 4-character identifier of the nearest active station (e.g., `BASE`, `NAUS`, `UFPR`, `POLI`).
+4. Verify station operational status: ensure the station was active and reporting data on the dates of your field campaign.
+
+---
+
+## Downloading Daily RINEX Files from IBGE GeoFTP
+
+IBGE hosts all historical and current RBMC observation data on their public **GeoFTP** server:
+
+> **Root GeoFTP URL:**  
+> `https://geoftp.ibge.gov.br/informacoes_sobre_posicionamento_geodesico/rbmc/dados/`
+
+### Understanding the GeoFTP Folder Hierarchy
+
+Data on the GeoFTP server is organized by **Calendar Year** and **Day of Year (DOY)**:
+
+```
+https://geoftp.ibge.gov.br/.../rbmc/dados/
+└── [YYYY]/                  <-- 4-digit Year (e.g., 2026)
+    └── [DOY]/               <-- 3-digit Day of Year (001 to 366, e.g., 075)
+        ├── [ssss][doy]0.[yy]d.Z   <-- Hatanaka-compressed Observation file (RINEX 2)
+        ├── [ssss][doy]0.[yy]n.Z   <-- GPS Broadcast Navigation file
+        ├── [ssss][doy]0.[yy]g.Z   <-- GLONASS Broadcast Navigation file
+        └── [ssss][doy]0.[yy]m.Z   <-- Meteorological data (if available)
+```
+
+::: {.callout-tip}
+### Converting Calendar Dates to Day of Year (DOY)
+GNSS reference files use the 3-digit Julian Day of Year (DOY). For example:
+* January 1st = `001`
+* February 1st = `032`
+* March 16th (non-leap year) = `075`
+
+You can look up the DOY using the official [NOAA Day of Year Calendar](https://www.esrl.noaa.gov/gmd/grad/neubrew/Calendar.html) or run a simple PowerShell one-liner:
+```powershell
+# Get Day of Year for a specific date in PowerShell 7
+(Get-Date "2026-03-16").DayOfYear
+# Outputs: 75 -> Format as 3 digits: '075'
+```
+:::
+
+### File Naming Conventions Decoded
+
+Suppose our reference station code is `BASE`, the survey took place on Day of Year `075`, in the year `2026` (`26`):
+
+1. **`base0750.26d.Z` (The Observation File):**
+   * `base`: 4-character station code (lowercase).
+   * `075`: Day of Year.
+   * `0`: Sequence number (`0` = full 24-hour daily file).
+   * `.26`: Two-digit year (2026).
+   * `d`: **Hatanaka-compressed observation file** (standard uncompressed files end in `o`).
+   * `.Z`: UNIX Compress compression wrapper (or `.gz`).
+2. **`base0750.26n.Z` (GPS Navigation File):**
+   * Contains broadcast ephemerides for GPS satellites.
+3. **`base0750.26g.Z` (GLONASS Navigation File):**
+   * Contains broadcast ephemerides for GLONASS satellites.
+
+::: {.callout-important}
+### What You Need to Download
+For PPK in Emlid Studio, you must download at least:
+1. The **Observation file** (`[ssss][doy]0.[yy]d.Z`).
+2. The **Navigation file** (`[ssss][doy]0.[yy]n.Z` and/or `[ssss][doy]0.[yy]g.Z`), or use the broadcast navigation file recorded by your own Reach RS2 receiver.
+:::
+
+---
+
+## Retrieving the Station Report (*Relatório da Estação*)
+
+Never rely solely on the coordinates written in the RINEX header of a reference station file. RINEX headers often contain approximate autonomous positions recorded when the receiver was first initialized.
+
+To achieve millimeter and centimeter geodetic accuracy, you must retrieve the official IBGE station report:
+
+1. Navigate to:  
+   `https://geoftp.ibge.gov.br/informacoes_sobre_posicionamento_geodesico/rbmc/relatorio/`
+2. Download the station PDF named `[ssss].pdf` (e.g., `BASE.pdf`).
+3. Locate the following critical parameters inside the report:
+
+```
+========================================================================
+EXEMPLAR EXTRACT: IBGE RBMC STATION DESCRIPTION REPORT
+========================================================================
+ESTAÇÃO: BASE - ESTAÇÃO EXEMPLAR
+MUNICÍPIO / UF: CIDADE / UF
+
+SISTEMA DE REFERÊNCIA GEOCÊNTRICO: SIRGAS2000 (Época: 2000.4)
+COORDENADAS GEODÉSICAS:
+  Latitude:   -03° 06' 18.24582" S  (ou graus decimais)
+  Longitude:  -60° 01' 22.98104" W
+  Altitude Elipsoidal (h):  78.452 m
+  Altitude Ortométrica (H): 54.120 m (Modelo MAPGEO2015)
+
+COORDENADAS CARTESIANAS (SIRGAS2000 2000.4):
+  X = 3165421.124 m
+  Y = -5523190.875 m
+  Z = -342891.432 m
+
+INFORMAÇÕES DA ANTENA:
+  Modelo da Antena:  TRM59800.00     NONE
+  Altura da Antena:  0.000 m (Medida vertical até o ARP)
+========================================================================
+```
+
+Keep this PDF open; you will enter these exact coordinates into Emlid Studio during the PPK configuration step.
+
+---
+
+## Decompressing Hatanaka Compact RINEX (`CRX2RNX`)
+
+The most common reason a student's RINEX file fails to open in Emlid Studio or RTKlib is that the file remains **Hatanaka-compressed**.
+
+### What is Hatanaka Compression?
+
+Developed by Dr. Yuki Hatanaka at the Geospatial Information Authority of Japan (GSI), the Compact RINEX format replaces raw phase and pseudorange measurements with second-order differences between consecutive epochs. 
+
+* Uncompressed RINEX observation file extension: `.yyO` or `.rnx` (ASCII text).
+* Hatanaka compressed file extension: `.yyD` or `.crx` (also ASCII text, but mathematically encoded).
+
+GNSS engines like Emlid Studio cannot parse a `.yyD` or `.crx` file directly; they require standard `.yyO` or `.rnx` observation files.
+
+```
+[base0750.26d.Z] 
+      |
+      | 1. Decompress .Z with 7-Zip or PowerShell
+      V
+[base0750.26d]   <-- Hatanaka Compact RINEX (not yet readable by Emlid Studio!)
+      |
+      | 2. Execute CRX2RNX.exe
+      V
+[base0750.26o]   <-- Standard Uncompressed RINEX Observation File (Ready for Emlid Studio)
+```
+
+---
+
+### Step-by-Step Decompression on Windows
+
+#### Step 1: Unpack the `.Z` or `.gz` Archive
+
+Right-click the downloaded `base0750.26d.Z` file and extract it using [7-Zip](https://7-zip.org/) or [WinRAR](https://www.win-rar.com/). This leaves you with the uncompressed archive content: `base0750.26d`.
+
+#### Step 2: Download the Official `CRX2RNX.exe` Tool
+
+1. Download the official, pre-compiled Windows executable `CRX2RNX.exe` from the IGS / GSI repository:  
+   [https://terras.gsi.go.jp/ja/crx2rnx.html](https://terras.gsi.go.jp/ja/crx2rnx.html) or the official [IGS RNXCMP tools repository](https://gage.earthscope.org/data/gnss/hatanaka.html).
+2. Place `CRX2RNX.exe` in your working directory (e.g., `C:\GNSS_Project\CRX2RNX.exe`).
+
+#### Step 3: Run Decompression in PowerShell 7
+
+Open PowerShell 7 in your data directory and run:
+
+```powershell
+# Decompress single Hatanaka file to standard RINEX observation
+.\CRX2RNX.exe .\base0750.26d
+```
+
+`CRX2RNX` automatically creates a new file in the same directory:
+* Input: `base0750.26d`
+* Output: `base0750.26o` (Standard RINEX Version 2.11 observation file)
+
+#### Step 4: Batch Decompression (PowerShell Script)
+
+If you have downloaded multiple days or multiple stations, decompressing them manually one by one is tedious. Use this copy-pasteable PowerShell snippet:
+
+```powershell
+# Batch decompress all .??d and .crx files in the current folder
+Get-ChildItem -Path . -Filter *.* | Where-Object { $_.Name -match "\.\d\d[dD]$|\.crx$" } | ForEach-Object {
+    Write-Host "Decompressing: $($_.Name)..." -ForegroundColor Cyan
+    & .\CRX2RNX.exe $_.FullName
+}
+Write-Host "All files decompressed successfully!" -ForegroundColor Green
+```
+
+You now have a clean, standard `.26o` observation file ready to load into Emlid Studio.

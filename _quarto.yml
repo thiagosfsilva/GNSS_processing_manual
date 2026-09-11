@@ -1,0 +1,35 @@
+project:
+  type: default
+  output-dir: _site
+
+title: "GNSS Post-Processing Manual: A Field-to-Coordinates Guide for Researchers"
+subtitle: "IBGE RBMC Data Retrieval, Emlid Studio PPK, RTKlib RINEX Decimation, and IBGE PPP Submission"
+author: "Thiago S. F. Silva"
+date: today
+date-format: "YYYY-MM-DD"
+
+format:
+  html:
+    theme:
+      light: cosmo
+    toc: true
+    toc-depth: 3
+    toc-title: "Table of Contents"
+    number-sections: true
+    code-copy: true
+    code-overflow: wrap
+    mermaid:
+      theme: neutral
+    smooth-scroll: true
+  pdf:
+    documentclass: scrartcl
+    papersize: a4
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    colorlinks: true
+    geometry:
+      - top=25mm
+      - left=25mm
+      - right=25mm
+      - bottom=25mm

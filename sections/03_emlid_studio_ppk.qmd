@@ -1,0 +1,186 @@
+# Post-Processing Kinematic (PPK) in Emlid Studio {#sec-emlid-studio-ppk}
+
+::: {.callout-note}
+### Purpose of this Chapter
+This chapter walks step-by-step through configuring and executing a differential Post-Processed Kinematic (PPK) solution in **Emlid Studio** on Windows. You will learn how to pair raw observation logs from an **Emlid Reach RS2** receiver with the decompressed **IBGE RBMC** base station data, set accurate antenna height offsets, enter official geodetic coordinates, and evaluate the quality of your solution track.
+:::
+
+## Introduction to Emlid Studio
+
+**Emlid Studio** is a free, cross-platform desktop application designed specifically for post-processing GNSS data. Beneath its modern graphical interface runs an optimized implementation of the open-source **RTKLIB** engine, tailored specifically to handle multi-frequency, multi-constellation logs.
+
+```{mermaid}
+flowchart TD
+    subgraph Data Inputs
+        R[Rover Log: Emlid Reach RS2<br/>Raw .UBX or .obs]
+        B[Base Log: IBGE RBMC<br/>Decompressed .obs]
+        N[Broadcast Navigation<br/>.nav / .yyN]
+    end
+
+    subgraph Emlid Studio Engine
+        P[Kinematic / Static Processing<br/>Double-Differenced Carrier Phase Filter]
+        C[Antenna Calibration & Offsets<br/>Reach RS2: 134 mm PCO]
+        S[Base Position Override<br/>Official IBGE SIRGAS2000 Coordinates]
+    end
+
+    subgraph Solution Output
+        SOL[Position Solution .pos<br/>Quality: Fix vs. Float vs. Single]
+    end
+
+    R --> P
+    B --> P
+    N --> P
+    C --> P
+    S --> P
+    P --> SOL
+```
+
+### Downloading and Installing on Windows
+
+1. Download the Windows installer (64-bit, Windows 10/11) from the official Emlid download page:  
+   [https://emlid.com/emlid-studio/#download](https://emlid.com/emlid-studio/#download)
+2. Run the installer `.exe` and follow the on-screen prompts.
+3. Launch Emlid Studio from the Start Menu or Desktop shortcut.
+
+---
+
+## Kinematic vs. Static Workflows
+
+In the top-left corner of the Emlid Studio window, click the workflow drop-down menu:
+
+![Emlid Studio Workflow Selection Dropdown](assets/images/emlid_workflow_dropdown.png){fig-align="center" width="80%"}
+
+There are two primary workflows depending on how your Reach RS2 was deployed in the field:
+
+1. **Kinematic Processing:**
+   * **When to use:** The Reach RS2 was moving (e.g., mounted on a backpack, drone, boat, vehicle, or handheld on a survey pole walking between wetland sample plots).
+   * **Output:** A continuous temporal trajectory of positions (one position per recording epoch, e.g., 1 Hz or 5 Hz).
+2. **Static Processing:**
+   * **When to use:** The Reach RS2 remained completely stationary on a tripod or bipod over a physical ground benchmark (for at least 15 minutes to several hours) to establish a new permanent local base point.
+   * **Output:** A single, averaged, high-precision geodetic coordinate set with formal standard deviations.
+
+---
+
+## Step-by-Step PPK Configuration (Kinematic Workflow)
+
+### Step 1: Loading the Rover Observation File
+
+1. In the **Rover** section, drag and drop the raw file from your Reach RS2 receiver.
+   * Emlid Studio accepts raw u-blox binary logs (`.UBX`), RTCM3 logs, or standard RINEX observation files (`.obs`, `.26o`, `.rnx`).
+   * *Automatic Conversion:* If you supply a `.UBX` file, Emlid Studio converts it to RINEX in the background automatically.
+2. Click the **Edit** button next to the rover antenna parameters:
+
+![Loading Rover Observation File and Setting Antenna Parameters](assets/images/emlid_rover_settings.png){fig-align="center" width="80%"}
+
+3. Set the antenna properties:
+   * **Antenna Type:** Select `Reach RS2` from the dropdown list.
+   * **Antenna Height (m):** Enter the physical height of your survey pole (e.g., `2.000` m) measured from the ground mark to the **Antenna Reference Point (ARP)**.
+
+::: {.callout-important}
+### Reach RS2 Internal Antenna Height Geometry
+When you select `Reach RS2` in the dropdown, Emlid Studio **automatically adds the internal 0.134 m (134 mm) Antenna Phase Center Offset (PCO)** to your entered pole height.
+* If your physical survey rod is 2.000 m tall, enter **`2.000`**.
+* **Do not** manually add 0.134 m yourself (e.g., entering `2.134`), or you will double-count the offset and your calculated elevation will be 13.4 cm too low!
+:::
+
+---
+
+### Step 2: Loading the IBGE RBMC Base Observation File
+
+1. In the **Base** section, drag and drop your decompressed IBGE RBMC observation file (e.g., `base0750.26o`).
+2. Examine the base station position fields:
+
+![Loading Base Observation File and Entering Known Geodetic Coordinates](assets/images/emlid_base_settings.png){fig-align="center" width="80%"}
+
+3. **Override the Base Position:**
+   By default, Emlid Studio selects **"RINEX Header Position"**. As noted in @sec-ibge-rbmc, this header position is only an approximate autonomous estimate.
+   * Click the position dropdown and select **Manual coordinates** (or Cartesian coordinates).
+   * Open the official IBGE **Relatório da Estação** (the station PDF downloaded in @sec-ibge-rbmc).
+   * Enter the exact geodetic coordinates:
+     * **Latitude ($\phi$):** e.g., `-03.10506828` (or degrees, minutes, seconds).
+     * **Longitude ($\lambda$):** e.g., `-60.02305029`.
+     * **Ellipsoidal Height ($h$):** e.g., `78.452` m.
+   * **Base Antenna Height:** Enter `0.000` m (because the official IBGE published coordinates refer directly to the station ARP on the physical monument).
+
+::: {.callout-caution}
+### Never Process Against Uncorrected Header Coordinates
+If you leave the base position on "RINEX Header Position", your relative baseline will be precise, but your absolute positions will be shifted in space by 2 to 5 meters! Always copy the official SIRGAS2000 coordinates from the IBGE station report.
+:::
+
+---
+
+### Step 3: Loading the Navigation File
+
+1. In the **Navigation** section, drag and drop the broadcast navigation file.
+2. You can use either:
+   * The broadcast navigation file downloaded from IBGE (`base0750.26n` / `base0750.26p`), or
+   * The navigation file recorded by your Reach RS2 during the survey (`.nav` or `.26p`).
+3. If your rover log is in `.UBX` format, Emlid Studio extracts the navigation file automatically during conversion.
+
+---
+
+### Step 4: Fine-Tuning Advanced Processing Settings
+
+Click the **Gear Icon** (Settings) in the top-right corner to open the RTKLIB configuration dialog:
+
+| Parameter | Recommended Setting | Scientific Rationale |
+|---|---|---|
+| **Positioning Mode** | `Kinematic` (or `Static`) | Matches your physical field motion. |
+| **Elevation Mask** | `15 deg` | Rejects satellites lower than 15° above the horizon, eliminating severe tropospheric delay and ground multipath. |
+| **SNR Mask** | `35 dB-Hz` | Discards weak satellite signals attenuated by forest canopy, heavy rain, or foliage. |
+| **Satellites / Systems** | `GPS, GLONASS, Galileo, BeiDou` | Utilizes all available constellations tracked by Reach RS2 to maximize geometry (low PDOP). |
+| **Ambiguity Resolution** | `Fix and Hold` or `Continuous` | `Continuous` is conservative and robust against cycle slips in dense forest; `Fix and Hold` is aggressive for open sky. |
+| **Solution Direction** | `Combined` | Runs the Kalman filter forward from start to end, then backward from end to start, smoothing out ambiguities. |
+
+---
+
+### Step 5: Processing and Quality Control
+
+1. Click the blue **Process** button in the lower-right corner.
+2. Monitor the progress bar as the forward and backward Kalman filters run:
+
+![PPK Processing in Progress](assets/images/emlid_processing_progress.png){fig-align="center" width="80%"}
+
+3. Once processing finishes, Emlid Studio displays the interactive track plot:
+
+![Emlid Studio PPK Solution Plot](assets/images/emlid_solution_plot.png){fig-align="center" width="80%"}
+
+---
+
+## Evaluating the Solution: Fix vs. Float vs. Single
+
+The interactive map colors each calculated epoch according to its mathematical quality:
+
+```{mermaid}
+pie title Epoch Solution Distribution (High Quality Survey Target)
+    "Fix (1-2 cm Accuracy)" : 96
+    "Float (20-80 cm Accuracy)" : 3
+    "Single (2-5 m Accuracy)" : 1
+```
+
+1. **Green — Fixed Solution:**
+   * The carrier-phase integer number of cycles between satellite and receiver has been unambiguously resolved.
+   * **Accuracy:** Horizontal 1–2 cm, Vertical 2–3 cm.
+   * **Usability:** Publishable, survey-grade ground truth.
+2. **Yellow — Float Solution:**
+   * The algorithm could not resolve the carrier-phase ambiguities to exact integers and maintains them as real (floating-point) numbers.
+   * **Accuracy:** Horizontal 20–80 cm, Vertical 0.5–1.5 m.
+   * **Usability:** Suitable for broad reconnaissance or rough GIS boundary mapping, but **unacceptable** for high-precision vertical datums or flood-pulse monitoring.
+3. **Red — Single (Autonomous) Solution:**
+   * No differential corrections were possible for this epoch (insufficient shared satellites between base and rover).
+   * **Accuracy:** 2 to 5 meters.
+
+::: {.callout-tip}
+### Quality Metric: Fix Ratio
+In scientific papers and technical reports, always report your **Fix Percentage** (e.g., "Post-processing in Emlid Studio achieved a 97.4% fixed integer ambiguity resolution across all 14,200 recorded epochs"). If your fix percentage is below 80%, examine your baseline distance, satellite elevation mask, or check whether dense canopy obstructed satellite line-of-sight.
+:::
+
+---
+
+## Inspecting and Exporting Solution Files
+
+Click the **Show Result Files** folder icon. Emlid Studio generates:
+
+1. **`*_events.pos`:** Contains the precise coordinates corresponding to time-marks (e.g., camera shutter triggers or manual point saves in Emlid Flow).
+2. **`*.pos`:** The complete trajectory file containing timestamp (UTC or GPS Time), Latitude, Longitude, Ellipsoidal Height ($h$), solution quality flag (`1 = Fix`, `2 = Float`, `5 = Single`), number of tracked satellites, and formal standard deviations ($\sigma_N, \sigma_E, \sigma_U$).
+3. **`*.csv`:** Comma-separated table easily imported into R (`sf`, `terra`), Python (`pandas`, `geopandas`), or QGIS.

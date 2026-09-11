@@ -1,0 +1,110 @@
+# Troubleshooting, Practical Pitfalls, and Field Checklist {#sec-troubleshooting}
+
+::: {.callout-note}
+### Purpose of this Chapter
+Field geodetic processing rarely succeeds on the very first try without encountering at least one software warning, file format rejection, or ambiguous solution flag. This chapter synthesizes the most frequent failure points encountered by graduate researchers and provides concrete, step-by-step diagnostic workflows to resolve them.
+:::
+
+## The Four Most Common Pitfalls and How to Fix Them
+
+### Pitfall 1: The "Float-Only" Trap in Emlid Studio
+
+**Symptom:** You run PPK processing in Emlid Studio, and the entire solution track is yellow (Float) with 0% or <10% Fix rate.
+
+```{mermaid}
+flowchart TD
+    A[Float Solution Trap<br/>Ambiguities Unresolved] --> B{Is Baseline to RBMC > 80 km?}
+    B -- Yes --> C[Baseline too long for single-baseline PPK<br/>Switch to Static IBGE PPP]
+    B -- No --> D{Was Survey Under Heavy Canopy?}
+    D -- Yes --> E[Severe cycle slips & signal attenuation<br/>Tune SNR/Elevation masks or use canopy opening]
+    D -- No --> F{Did you supply a valid NAV file?}
+    F -- No --> G[Add matching .nav broadcast ephemeris]
+    F -- Yes --> H[Check time overlap between Base and Rover]
+```
+
+**Root Causes & Solutions:**
+1. **Baseline Distance Exceeded:** If your study site is more than $70\text{ to }100\text{ km}$ from the nearest active IBGE RBMC station, ionospheric divergence between base and rover prevents the integer ambiguity filter from resolving.  
+   * **Fix:** If your Reach RS2 was logged statically for $\ge 2\text{ hours}$, abandon PPK and process the file via **IBGE PPP** instead (@sec-ibge-ppp).
+2. **Dense Forest Canopy:** Neotropical rainforest canopies attenuate L-band microwave signals and induce frequent cycle slips.
+   * **Fix:** In Emlid Studio Settings (gear icon), change Ambiguity Resolution from `Fix and Hold` to `Continuous`. Increase the **SNR Mask** from `35 dB-Hz` to `38 dB-Hz` to filter out canopy-scattered noise.
+3. **No Time Overlap:** The base and rover logs did not record at the same time (e.g., timezone mismatch between local UTC-4 / UTC-3 and satellite GPST).
+   * **Fix:** Inspect the time stamps in both RINEX files. Both receivers must be logging concurrently.
+
+---
+
+### Pitfall 2: RBMC File Ingestion Errors ("0 Valid Epochs")
+
+**Symptom:** You drag your downloaded IBGE RBMC file into Emlid Studio or RTKCONV, but the software shows an error, hangs, or reports "0 valid observation epochs".
+
+**Root Cause:** You loaded a **Hatanaka-compressed file** (`.crx` or `.26d`) directly without decompressing it first.
+
+**Fix:**
+1. As explained in @sec-ibge-rbmc, verify the file extension.
+2. If the file ends in `d` (e.g., `base0750.26d`), run:
+   ```powershell
+   .\CRX2RNX.exe .\base0750.26d
+   ```
+3. Load the resulting `base0750.26o` file into Emlid Studio.
+
+---
+
+### Pitfall 3: IBGE PPP File Rejection
+
+**Symptom:** Upon submitting your RINEX file to the IBGE PPP portal, the web interface returns an error:
+* *"Arquivo com intervalo de amostragem inadequado"*
+* *"Duração insuficiente de rastreio"*
+* *"Erro na leitura dos cabeçalhos RINEX"*
+
+**Root Causes & Solutions:**
+
+| IBGE PPP Error Message | Root Cause | Immediate Fix |
+|---|---|---|
+| **Intervalo inadequado** | High-rate file (1 Hz or 5 Hz) submitted directly. | Open RTKCONV, set **Time Interval = 30 s**, and re-export (@sec-rtklib-prep). |
+| **Duração insuficiente** | Observation session was $< 1\text{ hour}$. | Static PPP requires at least 1–2 hours for convergence; 4+ hours is recommended. Re-survey or use PPK. |
+| **Erro de cabeçalho** | Special characters or accented Portuguese letters (ex: `Estação_Água`) in marker name. | Open the `.obs` file in Notepad++ and edit `MARKER NAME` to use plain ASCII alphanumeric characters only (e.g., `BASE01`). |
+| **Formato incompatível** | Incomplete RINEX 3 multi-constellation header syntax. | Convert to **RINEX Version 2.11** using RTKCONV (@sec-rtklib-prep). |
+
+---
+
+### Pitfall 4: The 134 mm Height Offset Error
+
+**Symptom:** Your horizontal coordinates match historical maps, but your calculated elevation is approximately $13.4\text{ cm}$ too high or too low.
+
+**Root Cause:** Double-counting or omitting the internal Antenna Phase Center Offset (PCO) of the Reach RS2 ($0.134\text{ m}$).
+
+**Quick Reference Guide: Where to Enter Antenna Heights**
+
+| Software / Service | Antenna Model Selected | Value to Enter in Height Box | Software Action |
+|---|---|---|---|
+| **Emlid Studio** | `Reach RS2` | **Measured pole height** (e.g., `2.000` m) | Emlid Studio automatically adds $+0.134\text{ m}$ internally. |
+| **IBGE PPP** | `EML_REACH_RS2 NONE` | **Measured pole height** (e.g., `2.000` m) | IBGE calibration table applies the $+0.134\text{ m}$ PCO internally. |
+| **IBGE PPP** | `ADVNULLANTENNA NONE` | **Pole height + 0.134 m** (e.g., `2.134` m) | Null antenna has 0 offset; you must add the $0.134\text{ m}$ offset yourself! |
+
+---
+
+## Field Protocol Checklist for Flawless Post-Processing
+
+Print or save this checklist before heading into remote field campaigns:
+
+### 1. Pre-Field Preparation
+- [ ] **Firmware Update:** Ensure Emlid Reach RS2 receiver is updated to the latest stable firmware via Emlid Flow.
+- [ ] **Logging Configuration:**
+  - Raw logging enabled: Set to record raw `UBX` or `RINEX 2.11`.
+  - Constellations: Enable **GPS + GLONASS + Galileo + BeiDou**.
+  - Sampling Rate: $1\text{ Hz}$ or $5\text{ Hz}$ for mobile/kinematic; $1\text{ Hz}$ or $5\text{ s}$ for static base logging.
+- [ ] **Battery & Storage:** Fully charge the receiver internal battery and verify $\ge 8\text{ GB}$ of free internal storage.
+- [ ] **Hardware Check:** Verify survey pole bubble level is calibrated; check that tripod optical plummet or tribrach is adjusted.
+
+### 2. During Field Survey
+- [ ] **Rigid Monumentation:** Firmly seat the tripod or survey rod over the benchmark. Ensure no settling into soft wetland mud during long occupations.
+- [ ] **Measure Antenna Height:** Measure the vertical distance from the top of the benchmark to the bottom of the Reach RS2 brass 5/8" thread (ARP). **Record this number immediately in your physical field notebook**.
+- [ ] **Clear Sky View:** Whenever possible, set up static control points away from large tree trunks, overhanging branches, tin roofs, and standing water to prevent severe multipath.
+- [ ] **Minimum Duration:**
+  - If establishing a base point for **IBGE PPP:** Log continuously for **at least 2 to 4 hours**.
+  - If running **PPK rover points:** Maintain at least **15 to 30 continuous minutes** per point if under partial canopy.
+
+### 3. Post-Field Data Management
+- [ ] **Download Raw Logs:** Transfer raw `.UBX` files to your laptop immediately upon returning to basecamp.
+- [ ] **Zone C Archiving:** Duplicate raw logs into a dedicated, read-only backup directory (e.g., `data/raw/`) before opening or converting them in any software.
+- [ ] **Station Report Verification:** Download the official IBGE station description PDF for the reference station and record its official SIRGAS2000 coordinates.
+- [ ] **Documentation:** Record your final coordinates, reference frame epoch (2000.4 vs. survey epoch), and orthometric elevation ($H$) in your project database.

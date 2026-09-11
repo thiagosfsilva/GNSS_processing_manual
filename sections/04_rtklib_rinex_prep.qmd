@@ -1,0 +1,191 @@
+# Preparing RINEX Observations with RTKlib: 30-Second Decimation and Formatting {#sec-rtklib-prep}
+
+::: {.callout-note}
+### Purpose of this Chapter
+Before submitting raw GNSS logs from your Emlid Reach RS2 to the **IBGE PPP** (Precise Point Positioning) service, you must ensure the observation file complies with geodetic standards. High-rate field recordings (e.g., 1 Hz or 5 Hz) generate massive files that exceed IBGE upload limits and cause processing timeouts. 
+
+This chapter details how to use **RTKCONV** (the graphical conversion tool in the open-source **RTKLIB** suite) to decimate observations to the required **30-second interval**, standardize RINEX versioning, and configure header metadata.
+:::
+
+## Why Decimate Records to 30-Second Intervals?
+
+When collecting field data with an Emlid Reach RS2, the receiver typically logs at **1 Hz (1 measurement per second)** or **5 Hz (5 measurements per second)**. While high sampling rates are necessary for kinematic drone tracking or dynamic mobile trajectories, they are detrimental to static PPP processing:
+
+1. **Server Payload Rejection:** A 4-hour static survey logged at 5 Hz contains $72,000$ epochs, producing an uncompressed RINEX file of $150\text{ to }300\text{ MB}$. IBGE PPP web interfaces frequently reject files exceeding $10\text{ to }20\text{ MB}$ or fail during transmission.
+2. **Computational Redundancy:** Static PPP relies on the geometry change of GNSS satellites orbiting the Earth over several hours. Satellites move relatively slowly across the sky; recording phase measurements every $0.2\text{ seconds}$ versus every $30\text{ seconds}$ does not improve the final position estimate.
+3. **IGS Product Synchronization:** The International GNSS Service (IGS) precise satellite orbit and clock corrections used by IBGE PPP are generated natively at **30-second** intervals. 
+
+```{mermaid}
+flowchart LR
+    subgraph Raw High-Rate Log
+        A["1 Hz / 5 Hz Field Log<br/>72,000 Epochs (250 MB)"]
+    end
+
+    subgraph RTKCONV Decimation
+        B["RTKlib RTKCONV Filter<br/>Time Interval = 30 s"]
+    end
+
+    subgraph Geodetic Upload File
+        C["30-Second Static RINEX<br/>480 Epochs (1.5 MB)<br/>Zero Loss in Geodetic Accuracy"]
+    end
+
+    A --> B --> C
+```
+
+Decimating the file to 30 seconds reduces file size by **97%** with **zero loss in final geodetic accuracy**.
+
+---
+
+## Installing RTKLIB for Windows
+
+**RTKLIB** is the industry-standard open-source GNSS analysis suite created by Dr. Tomoji Takasu.
+
+1. Download the latest official Windows release package of RTKLIB (e.g., RTKLIB v2.4.3 or the optimized demo5 fork by Tim Everett) from GitHub:  
+   [https://github.com/rtklibexplorer/RTKLIB/releases](https://github.com/rtklibexplorer/RTKLIB/releases) or [http://www.rtklib.com/](http://www.rtklib.com/)
+2. Extract the downloaded `.zip` folder to a stable location on your computer (e.g., `C:\Tools\RTKLIB\`).
+3. Open the `bin\` subfolder. You will see several graphical tools:
+   * `rtkconv.exe`: Format conversion and decimation utility (our primary focus).
+   * `rtkpost.exe`: Post-processing kinematic/static baseline solver.
+   * `rtkplot.exe`: Residuals, skyplot, and trajectory visualizer.
+   * `convbin.exe`: Command-line version of RTKCONV.
+
+---
+
+## Step-by-Step Walkthrough: RTKCONV GUI
+
+Double-click `rtkconv.exe` to launch the conversion window.
+
+```
++-------------------------------------------------------------------------+
+| RTKCONV - RINEX Converter                                       [_][X] |
++-------------------------------------------------------------------------+
+| Time Start (GPST) [x] 2026/03/16 12:00:00  End [x] 2026/03/16 16:00:00 |
+| Time Interval     [x] 30 s                 Unit Period      24 h       |
++-------------------------------------------------------------------------+
+| Log File          [ C:\FieldData\ReachRS2_raw_survey.UBX             ] [...] |
+| Format            [ Auto / u-blox                                    ] |
++-------------------------------------------------------------------------+
+| Output Directory  [ C:\FieldData\Processed\                          ] [...] |
+| RINEX OBS         [ rover_30s.26o                                    ] |
+| RINEX NAV         [ rover_30s.26n                                    ] |
++-------------------------------------------------------------------------+
+| [ Options... ]                                     [ Convert ] [ Exit ] |
++-------------------------------------------------------------------------+
+```
+
+### Step 1: Selecting the Input File and Format
+
+1. In the **Log File** field, click the browse button (`...`) and select your raw Emlid Reach RS2 log.
+   * If you downloaded the raw log directly from the Emlid receiver via Wi-Fi or Emlid Flow, it is typically named `raw_YYYYMMDDHHMM.UBX`.
+   * If you previously exported a RINEX file from Emlid Studio at 1 Hz, select the `.obs` or `.26o` file.
+2. In the **Format** dropdown:
+   * Select `Auto` or `u-blox` if converting a raw `.UBX` file.
+   * Select `RINEX` if decimating an existing high-rate RINEX observation file.
+
+### Step 2: Defining Output File Paths
+
+1. In the **Output Directory** field, choose your clean project destination folder.
+2. RTKCONV automatically suggests filenames for the generated RINEX Observation (`.obs` or `.yyO`) and Navigation (`.nav` or `.yyN`) files.
+
+---
+
+### Step 3: Configuring Decimation and RINEX Options
+
+Click the **Options...** button. This opens the configuration window:
+
+```
++-------------------------------------------------------------------------+
+| Options                                                          [_][X] |
++-------------------------------------------------------------------------+
+| RINEX Version   (o) 2.11     ( ) 3.02     ( ) 3.04                     |
+| RINEX File Type [x] Observation   [x] Navigation  [ ] GNAV  [ ] HNAV   |
+| Frequencies     [x] L1+L2    [x] L5                                    |
+| Satellite Syst  [x] GPS      [x] GLONASS  [x] Galileo  [x] BeiDou      |
+| Observation Typ [x] C (Pseudorange)  [x] L (Carrier Phase)  [x] D  [x] S|
++-------------------------------------------------------------------------+
+| Station / Receiver / Antenna Information:                               |
+| Marker Name     [ BASE001         ]  Marker Number [ 0001             ] |
+| Observer / Agency [ RESEARCHER    ]  [ ECOLOGY LAB                    ] |
+| Rec Type/Vers   [ EMLID REACH RS2 ]  [ 3.0                            ] |
+| Ant Type/Vers   [ ADVNULLANTENNA  ]  [ NONE                           ] |
+| Ant Delta (H/E/N) [ 2.0000 ] m       [ 0.0000 ] m       [ 0.0000 ] m   |
++-------------------------------------------------------------------------+
+|                                                     [  OK  ] [ Cancel ] |
++-------------------------------------------------------------------------+
+```
+
+Configure each setting carefully:
+
+1. **RINEX Version:**
+   * Select **`2.11`**. 
+   * *Why:* While RINEX 3.04 supports newer constellation signals, IBGE PPP has historical optimizations for RINEX 2.11 dual-frequency files (GPS L1/L2 + GLONASS G1/G2). RINEX 2.11 guarantees seamless parsing without header syntax rejections.
+2. **Time Interval (The Decimation Setting):**
+   * Return to the main window (or options dialog depending on RTKLIB build).
+   * Check the **Time Interval** box and enter **`30 s`** (or `30.0`).
+   * This instructs RTKCONV to extract only epochs matching seconds `:00` and `:30`, discarding the other 29 epochs per 30-second cycle.
+3. **Time Start and End Trimming (Optional but Recommended):**
+   * Check **Time Start** and **Time End** if you need to crop the file.
+   * *Field Tip:* Tripods often wobble slightly while being placed and leveled during the first 2–5 minutes of a survey, and are disturbed when dismantling the station at the end. Trimming the first 5 minutes and last 5 minutes eliminates contaminated carrier-phase observations.
+4. **Antenna and Marker Metadata:**
+   * **Marker Name:** Enter a 4-to-8 character name identifying your survey benchmark (e.g., `BASE01`).
+   * **Antenna Type:** Enter `ADVNULLANTENNA NONE` or `EML_REACH_RS2 NONE`.
+   * **Antenna Delta (H/E/N):** Enter the measured vertical height of the tripod or pole in meters (e.g., `2.0000` m) in the **H** box. Leave East and North as `0.0000`.
+5. Click **OK** to save options.
+
+---
+
+### Step 4: Executing Conversion
+
+1. On the main window, click **Convert**.
+2. The status bar displays processing progress.
+3. Upon completion, navigate to your output folder. Notice the difference:
+   * Original `.UBX` file: `48,250 KB`
+   * Decimated `.26o` file: `1,240 KB`
+
+---
+
+## Verifying the Decimated File Header
+
+Open the generated `.26o` or `.obs` file in Notepad++ or VS Code. Check the ASCII header:
+
+```
+     2.11           OBSERVATION DATA    G (GPS)             RINEX VERSION / TYPE
+RTKCONV 2.4.3                           20260316 173000 UTC PGM / RUN BY / DATE
+BASE01                                                      MARKER NAME
+RESEARCHER          ECOLOGY LAB                             OBSERVER / AGENCY
+000000              EMLID REACH RS2     3.0                 REC # / TYPE / VERS
+000000              ADVNULLANTENNA      NONE                ANT # / TYPE
+  3165420.0000 -5523190.0000  -342890.0000                  APPROX POSITION XYZ
+        2.0000        0.0000        0.0000                  ANTENNA: DELTA H/E/N
+     1     1                                                WAVELENGTH FACT L1/2
+     4    L1    L2    C1    P2                              # / TYPES OF OBSERV
+   30.000                                                   INTERVAL
+  2026     3    16    12     5    0.0000000     GPS         TIME OF FIRST OBS
+  2026     3    16    15    55    0.0000000     GPS         TIME OF LAST OBS
+                                                            END OF HEADER
+```
+
+Look specifically for the **`INTERVAL`** line: it must read **`30.000`**. You now have a compliant RINEX observation file ready for IBGE PPP.
+
+---
+
+## Command-Line Alternative: `convbin`
+
+If you prefer scripting your workflow or need to batch process multiple survey days, use the command-line utility `convbin.exe` (located in the same `bin\` folder).
+
+Open PowerShell 7 and run:
+
+```powershell
+# Convert raw u-blox file to 30-second decimated RINEX 2.11
+.\convbin.exe -r ubx -v 2.11 -ti 30 -od -os -o rover_30s.26o -n rover_30s.26n .\raw_reach_rs2.ubx
+```
+
+### Explanation of Command-Line Flags
+
+* `-r ubx`: Specifies the input format as u-blox binary.
+* `-v 2.11`: Enforces RINEX Version 2.11.
+* `-ti 30`: Sets the decimation time interval to 30 seconds.
+* `-od`: Includes Doppler frequency measurements in the observation table.
+* `-os`: Includes Signal-to-Noise Ratio (SNR) signal strength measurements.
+* `-o <filename>`: Specifies the output observation file path.
+* `-n <filename>`: Specifies the output broadcast navigation file path.
