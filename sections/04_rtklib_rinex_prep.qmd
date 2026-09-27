@@ -44,10 +44,10 @@ Decimating the file to 30 seconds reduces file size by **97%** with **zero loss 
    [https://github.com/rtklibexplorer/RTKLIB/releases](https://github.com/rtklibexplorer/RTKLIB/releases) or [http://www.rtklib.com/](http://www.rtklib.com/)
 2. Extract the downloaded `.zip` folder to a stable location on your computer (e.g., `C:\Tools\RTKLIB\`).
 3. Open the `bin\` subfolder. You will see several graphical tools:
-   * `rtkconv.exe`: Format conversion and decimation utility (our primary focus).
-   * `rtkpost.exe`: Post-processing kinematic/static baseline solver.
-   * `rtkplot.exe`: Residuals, skyplot, and trajectory visualizer.
-   * `convbin.exe`: Command-line version of RTKCONV.
+   - `rtkconv.exe`: Format conversion and decimation utility (our primary focus).
+   - `rtkpost.exe`: Post-processing kinematic/static baseline solver.
+   - `rtkplot.exe`: Residuals, skyplot, and trajectory visualizer.
+   - `convbin.exe`: Command-line version of RTKCONV.
 
 ---
 
@@ -76,11 +76,11 @@ Double-click `rtkconv.exe` to launch the conversion window.
 ### Step 1: Selecting the Input File and Format
 
 1. In the **Log File** field, click the browse button (`...`) and select your raw Emlid Reach RS2 log.
-   * If you downloaded the raw log directly from the Emlid receiver via Wi-Fi or Emlid Flow, it is typically named `raw_YYYYMMDDHHMM.UBX`.
-   * If you previously exported a RINEX file from Emlid Studio at 1 Hz, select the `.obs` or `.26o` file.
+   - If you downloaded the raw log directly from the Emlid receiver via Wi-Fi or Emlid Flow, it is typically named `raw_YYYYMMDDHHMM.UBX`.
+   - If you previously exported a RINEX file from Emlid Studio at 1 Hz, select the `.obs` or `.26o` file.
 2. In the **Format** dropdown:
-   * Select `Auto` or `u-blox` if converting a raw `.UBX` file.
-   * Select `RINEX` if decimating an existing high-rate RINEX observation file.
+   - Select `Auto` or `u-blox` if converting a raw `.UBX` file.
+   - Select `RINEX` if decimating an existing high-rate RINEX observation file.
 
 ### Step 2: Defining Output File Paths
 
@@ -117,19 +117,19 @@ Click the **Options...** button. This opens the configuration window:
 Configure each setting carefully:
 
 1. **RINEX Version:**
-   * Select **`2.11`**. 
-   * *Why:* While RINEX 3.04 supports newer constellation signals, IBGE PPP has historical optimizations for RINEX 2.11 dual-frequency files (GPS L1/L2 + GLONASS G1/G2). RINEX 2.11 guarantees seamless parsing without header syntax rejections.
+   - Select **`2.11`**. 
+   - *Why:* While RINEX 3.04 supports newer constellation signals, IBGE PPP has historical optimizations for RINEX 2.11 dual-frequency files (GPS L1/L2 + GLONASS G1/G2). RINEX 2.11 guarantees seamless parsing without header syntax rejections.
 2. **Time Interval (The Decimation Setting):**
-   * Return to the main window (or options dialog depending on RTKLIB build).
-   * Check the **Time Interval** box and enter **`30 s`** (or `30.0`).
-   * This instructs RTKCONV to extract only epochs matching seconds `:00` and `:30`, discarding the other 29 epochs per 30-second cycle.
+   - Return to the main window (or options dialog depending on RTKLIB build).
+   - Check the **Time Interval** box and enter **`30 s`** (or `30.0`).
+   - This instructs RTKCONV to extract only epochs matching seconds `:00` and `:30`, discarding the other 29 epochs per 30-second cycle.
 3. **Time Start and End Trimming (Optional but Recommended):**
-   * Check **Time Start** and **Time End** if you need to crop the file.
-   * *Field Tip:* Tripods often wobble slightly while being placed and leveled during the first 2–5 minutes of a survey, and are disturbed when dismantling the station at the end. Trimming the first 5 minutes and last 5 minutes eliminates contaminated carrier-phase observations.
+   - Check **Time Start** and **Time End** if you need to crop the file.
+   - *Field Tip:* Tripods often wobble slightly while being placed and leveled during the first 2–5 minutes of a survey, and are disturbed when dismantling the station at the end. Trimming the first 5 minutes and last 5 minutes eliminates contaminated carrier-phase observations.
 4. **Antenna and Marker Metadata:**
-   * **Marker Name:** Enter a 4-to-8 character name identifying your survey benchmark (e.g., `BASE01`).
-   * **Antenna Type:** Enter `ADVNULLANTENNA NONE` or `EML_REACH_RS2 NONE`.
-   * **Antenna Delta (H/E/N):** Enter the measured vertical height of the tripod or pole in meters (e.g., `2.0000` m) in the **H** box. Leave East and North as `0.0000`.
+   - **Marker Name:** Enter a 4-to-8 character name identifying your survey benchmark (e.g., `BASE01`).
+   - **Antenna Type:** Enter `ADVNULLANTENNA NONE` or `EML_REACH_RS2 NONE`.
+   - **Antenna Delta (H/E/N):** Enter the measured vertical height of the tripod or pole in meters (e.g., `2.0000` m) in the **H** box. Leave East and North as `0.0000`.
 5. Click **OK** to save options.
 
 ---
@@ -139,8 +139,8 @@ Configure each setting carefully:
 1. On the main window, click **Convert**.
 2. The status bar displays processing progress.
 3. Upon completion, navigate to your output folder. Notice the difference:
-   * Original `.UBX` file: `48,250 KB`
-   * Decimated `.26o` file: `1,240 KB`
+   - Original `.UBX` file: `48,250 KB`
+   - Decimated `.26o` file: `1,240 KB`
 
 ---
 
@@ -182,10 +182,10 @@ Open PowerShell 7 and run:
 
 ### Explanation of Command-Line Flags
 
-* `-r ubx`: Specifies the input format as u-blox binary.
-* `-v 2.11`: Enforces RINEX Version 2.11.
-* `-ti 30`: Sets the decimation time interval to 30 seconds.
-* `-od`: Includes Doppler frequency measurements in the observation table.
-* `-os`: Includes Signal-to-Noise Ratio (SNR) signal strength measurements.
-* `-o <filename>`: Specifies the output observation file path.
-* `-n <filename>`: Specifies the output broadcast navigation file path.
+- `-r ubx`: Specifies the input format as u-blox binary.
+- `-v 2.11`: Enforces RINEX Version 2.11.
+- `-ti 30`: Sets the decimation time interval to 30 seconds.
+- `-od`: Includes Doppler frequency measurements in the observation table.
+- `-os`: Includes Signal-to-Noise Ratio (SNR) signal strength measurements.
+- `-o <filename>`: Specifies the output observation file path.
+- `-n <filename>`: Specifies the output broadcast navigation file path.

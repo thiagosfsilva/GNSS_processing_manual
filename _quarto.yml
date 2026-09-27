@@ -1,10 +1,14 @@
 project:
   type: default
   output-dir: _site
+  render:
+    - index.qmd
 
-title: "GNSS Post-Processing Manual: A Field-to-Coordinates Guide for Researchers"
-subtitle: "IBGE RBMC Data Retrieval, Emlid Studio PPK, RTKlib RINEX Decimation, and IBGE PPP Submission"
-author: "Thiago S. F. Silva"
+title: "Post-Processing GNSS Acquisitions in Brazil: A Practical Guide"
+subtitle: "From Field Observations to Centimeter-Grade Coordinates: IBGE RBMC, Emlid Studio PPK, RTKlib, and IBGE PPP"
+author:
+  - name: "Thiago S. F. Silva"
+    affiliation: "University of Stirling / University of Manchester"
 date: today
 date-format: "YYYY-MM-DD"
 
@@ -21,15 +25,3 @@ format:
     mermaid:
       theme: neutral
     smooth-scroll: true
-  pdf:
-    documentclass: scrartcl
-    papersize: a4
-    toc: true
-    toc-depth: 3
-    number-sections: true
-    colorlinks: true
-    geometry:
-      - top=25mm
-      - left=25mm
-      - right=25mm
-      - bottom=25mm

@@ -24,11 +24,11 @@ flowchart TD
 
 **Root Causes & Solutions:**
 1. **Baseline Distance Exceeded:** If your study site is more than $70\text{ to }100\text{ km}$ from the nearest active IBGE RBMC station, ionospheric divergence between base and rover prevents the integer ambiguity filter from resolving.  
-   * **Fix:** If your Reach RS2 was logged statically for $\ge 2\text{ hours}$, abandon PPK and process the file via **IBGE PPP** instead (@sec-ibge-ppp).
+   - **Fix:** If your Reach RS2 was logged statically for $\ge 2\text{ hours}$, abandon PPK and process the file via **IBGE PPP** instead (@sec-ibge-ppp).
 2. **Dense Forest Canopy:** Neotropical rainforest canopies attenuate L-band microwave signals and induce frequent cycle slips.
-   * **Fix:** In Emlid Studio Settings (gear icon), change Ambiguity Resolution from `Fix and Hold` to `Continuous`. Increase the **SNR Mask** from `35 dB-Hz` to `38 dB-Hz` to filter out canopy-scattered noise.
+   - **Fix:** In Emlid Studio Settings (gear icon), change Ambiguity Resolution from `Fix and Hold` to `Continuous`. Increase the **SNR Mask** from `35 dB-Hz` to `38 dB-Hz` to filter out canopy-scattered noise.
 3. **No Time Overlap:** The base and rover logs did not record at the same time (e.g., timezone mismatch between local UTC-4 / UTC-3 and satellite GPST).
-   * **Fix:** Inspect the time stamps in both RINEX files. Both receivers must be logging concurrently.
+   - **Fix:** Inspect the time stamps in both RINEX files. Both receivers must be logging concurrently.
 
 ---
 
@@ -51,9 +51,9 @@ flowchart TD
 ### Pitfall 3: IBGE PPP File Rejection
 
 **Symptom:** Upon submitting your RINEX file to the IBGE PPP portal, the web interface returns an error:
-* *"Arquivo com intervalo de amostragem inadequado"*
-* *"Duração insuficiente de rastreio"*
-* *"Erro na leitura dos cabeçalhos RINEX"*
+- *"Arquivo com intervalo de amostragem inadequado"*
+- *"Duração insuficiente de rastreio"*
+- *"Erro na leitura dos cabeçalhos RINEX"*
 
 **Root Causes & Solutions:**
 

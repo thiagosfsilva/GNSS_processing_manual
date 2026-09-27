@@ -13,7 +13,7 @@ This chapter walks step-by-step through configuring and executing a differential
 flowchart TD
     subgraph Data Inputs
         R[Rover Log: Emlid Reach RS2<br/>Raw .UBX or .obs]
-        B[Base Log: IBGE RBMC<br/>Decompressed .obs]
+        B[Base Log: IBGE RBMC<br/>Decompressed .yyO]
         N[Broadcast Navigation<br/>.nav / .yyN]
     end
 
@@ -53,11 +53,12 @@ In the top-left corner of the Emlid Studio window, click the workflow drop-down 
 There are two primary workflows depending on how your Reach RS2 was deployed in the field:
 
 1. **Kinematic Processing:**
-   * **When to use:** The Reach RS2 was moving (e.g., mounted on a backpack, drone, boat, vehicle, or handheld on a survey pole walking between wetland sample plots).
-   * **Output:** A continuous temporal trajectory of positions (one position per recording epoch, e.g., 1 Hz or 5 Hz).
+   - **When to use:** The Reach RS2 was moving (e.g., mounted on a backpack, drone, boat, vehicle, or handheld on a survey pole while walking).
+   - **Output:** A continuous temporal trajectory of positions (one position per recording epoch, e.g., 1 Hz or 5 Hz).
+
 2. **Static Processing:**
-   * **When to use:** The Reach RS2 remained completely stationary on a tripod or bipod over a physical ground benchmark (for at least 15 minutes to several hours) to establish a new permanent local base point.
-   * **Output:** A single, averaged, high-precision geodetic coordinate set with formal standard deviations.
+   - **When to use:** The Reach RS2 remained completely stationary on a tripod or bipod over a physical ground benchmark (from a few minutes to several hours) to establish a new permanent point.
+   - **Output:** A single, averaged, high-precision geodetic coordinate set with formal standard deviations.
 
 ---
 
@@ -66,21 +67,21 @@ There are two primary workflows depending on how your Reach RS2 was deployed in 
 ### Step 1: Loading the Rover Observation File
 
 1. In the **Rover** section, drag and drop the raw file from your Reach RS2 receiver.
-   * Emlid Studio accepts raw u-blox binary logs (`.UBX`), RTCM3 logs, or standard RINEX observation files (`.obs`, `.26o`, `.rnx`).
-   * *Automatic Conversion:* If you supply a `.UBX` file, Emlid Studio converts it to RINEX in the background automatically.
+   - Emlid Studio accepts raw u-blox binary logs (`.UBX`), RTCM3 logs, or standard RINEX observation files (`.obs`, `.26o`, `.rnx`).
+   - *Automatic Conversion:* If you supply a `.UBX` file, Emlid Studio converts it to RINEX in the background automatically.
 2. Click the **Edit** button next to the rover antenna parameters:
 
 ![Loading Rover Observation File and Setting Antenna Parameters](assets/images/emlid_rover_settings.png){fig-align="center" width="80%"}
 
 3. Set the antenna properties:
-   * **Antenna Type:** Select `Reach RS2` from the dropdown list.
-   * **Antenna Height (m):** Enter the physical height of your survey pole (e.g., `2.000` m) measured from the ground mark to the **Antenna Reference Point (ARP)**.
+   - **Antenna Type:** Select `Reach RS2` from the dropdown list.
+   - **Antenna Height (m):** Enter the physical height of your survey pole (e.g., `2.000` m) measured from the ground mark to the **Antenna Reference Point (ARP)**.
 
 ::: {.callout-important}
 ### Reach RS2 Internal Antenna Height Geometry
 When you select `Reach RS2` in the dropdown, Emlid Studio **automatically adds the internal 0.134 m (134 mm) Antenna Phase Center Offset (PCO)** to your entered pole height.
-* If your physical survey rod is 2.000 m tall, enter **`2.000`**.
-* **Do not** manually add 0.134 m yourself (e.g., entering `2.134`), or you will double-count the offset and your calculated elevation will be 13.4 cm too low!
+- If your physical survey rod is 2.000 m tall, enter **`2.000`**.
+- **Do not** manually add 0.134 m yourself (e.g., entering `2.134`), or you will double-count the offset and your calculated elevation will be 13.4 cm too low!
 :::
 
 ---
@@ -94,13 +95,13 @@ When you select `Reach RS2` in the dropdown, Emlid Studio **automatically adds t
 
 3. **Override the Base Position:**
    By default, Emlid Studio selects **"RINEX Header Position"**. As noted in @sec-ibge-rbmc, this header position is only an approximate autonomous estimate.
-   * Click the position dropdown and select **Manual coordinates** (or Cartesian coordinates).
-   * Open the official IBGE **Relatório da Estação** (the station PDF downloaded in @sec-ibge-rbmc).
-   * Enter the exact geodetic coordinates:
-     * **Latitude ($\phi$):** e.g., `-03.10506828` (or degrees, minutes, seconds).
-     * **Longitude ($\lambda$):** e.g., `-60.02305029`.
-     * **Ellipsoidal Height ($h$):** e.g., `78.452` m.
-   * **Base Antenna Height:** Enter `0.000` m (because the official IBGE published coordinates refer directly to the station ARP on the physical monument).
+   - Click the position dropdown and select **Manual coordinates** (or Cartesian coordinates).
+   - Open the official IBGE **Relatório da Estação** (the station PDF downloaded in @sec-ibge-rbmc).
+   - Enter the exact geodetic coordinates:
+     - **Latitude ($\phi$):** e.g., `-03.10506828` (or degrees, minutes, seconds).
+     - **Longitude ($\lambda$):** e.g., `-60.02305029`.
+     - **Ellipsoidal Height ($h$):** e.g., `78.452` m.
+   - **Base Antenna Height:** Enter `0.000` m (because the official IBGE published coordinates refer directly to the station ARP on the physical monument).
 
 ::: {.callout-caution}
 ### Never Process Against Uncorrected Header Coordinates
@@ -113,8 +114,8 @@ If you leave the base position on "RINEX Header Position", your relative baselin
 
 1. In the **Navigation** section, drag and drop the broadcast navigation file.
 2. You can use either:
-   * The broadcast navigation file downloaded from IBGE (`base0750.26n` / `base0750.26p`), or
-   * The navigation file recorded by your Reach RS2 during the survey (`.nav` or `.26p`).
+   - The broadcast navigation file downloaded from IBGE (`base0750.26n` / `base0750.26p`), or
+   - The navigation file recorded by your Reach RS2 during the survey (`.nav` or `.26p`).
 3. If your rover log is in `.UBX` format, Emlid Studio extracts the navigation file automatically during conversion.
 
 ---
@@ -159,16 +160,16 @@ pie title Epoch Solution Distribution (High Quality Survey Target)
 ```
 
 1. **Green — Fixed Solution:**
-   * The carrier-phase integer number of cycles between satellite and receiver has been unambiguously resolved.
-   * **Accuracy:** Horizontal 1–2 cm, Vertical 2–3 cm.
-   * **Usability:** Publishable, survey-grade ground truth.
+   - The carrier-phase integer number of cycles between satellite and receiver has been unambiguously resolved.
+   - **Accuracy:** Horizontal 1–2 cm, Vertical 2–3 cm.
+   - **Usability:** Publishable, survey-grade ground truth.
 2. **Yellow — Float Solution:**
-   * The algorithm could not resolve the carrier-phase ambiguities to exact integers and maintains them as real (floating-point) numbers.
-   * **Accuracy:** Horizontal 20–80 cm, Vertical 0.5–1.5 m.
-   * **Usability:** Suitable for broad reconnaissance or rough GIS boundary mapping, but **unacceptable** for high-precision vertical datums or flood-pulse monitoring.
+   - The algorithm could not resolve the carrier-phase ambiguities to exact integers and maintains them as real (floating-point) numbers.
+   - **Accuracy:** Horizontal 20–80 cm, Vertical 0.5–1.5 m.
+   - **Usability:** Suitable for broad reconnaissance or rough GIS boundary mapping, but **unacceptable** for high-precision vertical datums or flood-pulse monitoring.
 3. **Red — Single (Autonomous) Solution:**
-   * No differential corrections were possible for this epoch (insufficient shared satellites between base and rover).
-   * **Accuracy:** 2 to 5 meters.
+   - No differential corrections were possible for this epoch (insufficient shared satellites between base and rover).
+   - **Accuracy:** 2 to 5 meters.
 
 ::: {.callout-tip}
 ### Quality Metric: Fix Ratio

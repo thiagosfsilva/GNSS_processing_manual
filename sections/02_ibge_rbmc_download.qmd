@@ -12,11 +12,17 @@ This chapter explains how to find the right station, retrieve the correct 24-hou
 The **RBMC** is the backbone of the Brazilian Geodetic System (SGB). It consists of more than 140 permanently operating, geodetic-grade GNSS tracking stations distributed across all Brazilian states and ecological biomes.
 
 ```{mermaid}
-flowchart LR
-    A[IBGE Continuous Station<br/>Choke-ring Antenna + Geodetic Receiver] -->|Tracks 24/7| B[Raw Continuous Observations<br/>GPS, GLONASS, Galileo, BeiDou]
-    B -->|Daily Midnight UTC Chunking| C[Daily RINEX Files<br/>30-second interval]
-    C -->|Hatanaka Compression| D[GeoFTP Server<br/>geoftp.ibge.gov.br]
-    D -->|Download by Field Researcher| E[Local Project Directory<br/>Decompressed with CRX2RNX]
+flowchart TD
+    A["<b>1. IBGE Continuous Tracking Station</b><br/>Choke-ring antenna + geodetic receiver"] -->|"Tracks multi-GNSS 24/7"| B["<b>2. Raw Continuous Observations</b><br/>GPS, GLONASS, Galileo, BeiDou"]
+    B -->|"Daily midnight UTC chunking"| C["<b>3. Daily RINEX Observation Files</b><br/>Standard 30-second sampling interval"]
+    C -->|"Hatanaka (.crx/.26d) & UNIX (.Z) compression"| D["<b>4. IBGE GeoFTP Distribution Server</b><br/>geoftp.ibge.gov.br"]
+    D -->|"Download by field researcher"| E["<b>5. Local Working Directory</b><br/>Decompressed with CRX2RNX.exe (to .26o)"]
+
+    style A fill:#e1f5fe,stroke:#0288d1,stroke-width:2px
+    style B fill:#e8f5e9,stroke:#388e3c,stroke-width:2px
+    style C fill:#fff8e1,stroke:#ffa000,stroke-width:2px
+    style D fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    style E fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
 ```
 
 Each RBMC station tracks multi-frequency satellite signals 24 hours a day, 365 days a year. Every day at 00:00:00 UTC, the daily dataset is packaged, compressed using the Hatanaka algorithm, and published to IBGE's public geodetic repository.
@@ -36,11 +42,10 @@ The baseline distance between your field survey site and the RBMC station determ
 
 ### Step 1: Identifying Stations via the IBGE Interactive Map
 
-1. Navigate to the official IBGE Geodesy portal:  
-   [https://www.ibge.gov.br/geociencias/informacoes-sobre-posicionamento-geodesico/rbmc/rede-brasileira-de-monitoramento-continuo.html](https://www.ibge.gov.br/geociencias/informacoes-sobre-posicionamento-geodesico/rbmc/rede-brasileira-de-monitoramento-continuo.html)
-2. Open the **Rede RBMC Interativa** map viewer.
-3. Locate your field study area and identify the 4-character identifier of the nearest active station (e.g., `BASE`, `NAUS`, `UFPR`, `POLI`).
-4. Verify station operational status: ensure the station was active and reporting data on the dates of your field campaign.
+1. Navigate to the ["daily data and operational situation"](https://www.ibge.gov.br/geociencias/informacoes-sobre-posicionamento-geodesico/rede-geodesica/16258-rede-brasileira-de-monitoramento-continuo-dos-sistemas-gnss-rbmc.html?=&t=dados-diarios-e-situacao-operacional) page.  
+2. Find the nearest station to your field site by zooming and panning the map.
+3. Check if the station is **active** (green dot) or **inactive** (red dot). Only active stations can be used for PPK processing. 
+4. Identify the 4-character identifier of the nearest active station (e.g., `AMTE`). The two first letters are the state code, and the last two letters come from the city name - AMTE is the station for Tefé, Amazonas.
 
 ---
 
@@ -49,7 +54,7 @@ The baseline distance between your field survey site and the RBMC station determ
 IBGE hosts all historical and current RBMC observation data on their public **GeoFTP** server:
 
 > **Root GeoFTP URL:**  
-> `https://geoftp.ibge.gov.br/informacoes_sobre_posicionamento_geodesico/rbmc/dados/`
+> [https://geoftp.ibge.gov.br/informacoes_sobre_posicionamento_geodesico/rbmc/dados/](https://geoftp.ibge.gov.br/informacoes_sobre_posicionamento_geodesico/rbmc/dados)
 
 ### Understanding the GeoFTP Folder Hierarchy
 
@@ -68,9 +73,9 @@ https://geoftp.ibge.gov.br/.../rbmc/dados/
 ::: {.callout-tip}
 ### Converting Calendar Dates to Day of Year (DOY)
 GNSS reference files use the 3-digit Julian Day of Year (DOY). For example:
-* January 1st = `001`
-* February 1st = `032`
-* March 16th (non-leap year) = `075`
+- January 1st = `001`
+- February 1st = `032`
+- March 16th (non-leap year) = `075`
 
 You can look up the DOY using the official [NOAA Day of Year Calendar](https://www.esrl.noaa.gov/gmd/grad/neubrew/Calendar.html) or run a simple PowerShell one-liner:
 ```powershell
@@ -85,16 +90,16 @@ You can look up the DOY using the official [NOAA Day of Year Calendar](https://w
 Suppose our reference station code is `BASE`, the survey took place on Day of Year `075`, in the year `2026` (`26`):
 
 1. **`base0750.26d.Z` (The Observation File):**
-   * `base`: 4-character station code (lowercase).
-   * `075`: Day of Year.
-   * `0`: Sequence number (`0` = full 24-hour daily file).
-   * `.26`: Two-digit year (2026).
-   * `d`: **Hatanaka-compressed observation file** (standard uncompressed files end in `o`).
-   * `.Z`: UNIX Compress compression wrapper (or `.gz`).
+   - `base`: 4-character station code (lowercase).
+   - `075`: Day of Year.
+   - `0`: Sequence number (`0` = full 24-hour daily file).
+   - `.26`: Two-digit year (2026).
+   - `d`: **Hatanaka-compressed observation file** (standard uncompressed files end in `o`).
+   - `.Z`: UNIX Compress compression wrapper (or `.gz`).
 2. **`base0750.26n.Z` (GPS Navigation File):**
-   * Contains broadcast ephemerides for GPS satellites.
+   - Contains broadcast ephemerides for GPS satellites.
 3. **`base0750.26g.Z` (GLONASS Navigation File):**
-   * Contains broadcast ephemerides for GLONASS satellites.
+   - Contains broadcast ephemerides for GLONASS satellites.
 
 ::: {.callout-important}
 ### What You Need to Download
@@ -147,14 +152,14 @@ Keep this PDF open; you will enter these exact coordinates into Emlid Studio dur
 
 ## Decompressing Hatanaka Compact RINEX (`CRX2RNX`)
 
-The most common reason a student's RINEX file fails to open in Emlid Studio or RTKlib is that the file remains **Hatanaka-compressed**.
+The most common reason a RINEX file fails to open in Emlid Studio or RTKlib is that the file remains **Hatanaka-compressed**.
 
 ### What is Hatanaka Compression?
 
 Developed by Dr. Yuki Hatanaka at the Geospatial Information Authority of Japan (GSI), the Compact RINEX format replaces raw phase and pseudorange measurements with second-order differences between consecutive epochs. 
 
-* Uncompressed RINEX observation file extension: `.yyO` or `.rnx` (ASCII text).
-* Hatanaka compressed file extension: `.yyD` or `.crx` (also ASCII text, but mathematically encoded).
+- Uncompressed RINEX observation file extension: `.yyO` or `.rnx` (ASCII text).
+- Hatanaka compressed file extension: `.yyD` or `.crx` (also ASCII text, but mathematically encoded).
 
 GNSS engines like Emlid Studio cannot parse a `.yyD` or `.crx` file directly; they require standard `.yyO` or `.rnx` observation files.
 
@@ -194,8 +199,8 @@ Open PowerShell 7 in your data directory and run:
 ```
 
 `CRX2RNX` automatically creates a new file in the same directory:
-* Input: `base0750.26d`
-* Output: `base0750.26o` (Standard RINEX Version 2.11 observation file)
+- Input: `base0750.26d`
+- Output: `base0750.26o` (Standard RINEX Version 2.11 observation file)
 
 #### Step 4: Batch Decompression (PowerShell Script)
 

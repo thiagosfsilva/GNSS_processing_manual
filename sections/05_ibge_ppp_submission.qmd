@@ -93,24 +93,24 @@ Click **Acessar o serviço** (Access Service).
 Configure the fields as follows:
 
 1. **E-mail do usuário (User Email):**
-   * Enter your active academic email address. IBGE sends the completed processing notification, summary report, and download link to this address.
+   - Enter your active academic email address. IBGE sends the completed processing notification, summary report, and download link to this address.
 2. **Modo de Processamento (Processing Mode):**
-   * Select **Estático (Static)**.
-   * *Note:* Use "Cinemático" only if your Reach RS2 was continuously moving during data collection.
+   - Select **Estático (Static)**.
+   - *Note:* Use "Cinemático" only if your Reach RS2 was continuously moving during data collection.
 3. **Tipo de Receptor (Receiver Type):**
-   * Select or type `EMLID REACH RS2` (or leave default if auto-detected from the RINEX header).
+   - Select or type `EMLID REACH RS2` (or leave default if auto-detected from the RINEX header).
 4. **Modelo da Antena (Antenna Model):**
-   * Check if `EML_REACH_RS2 NONE` appears in the antenna selection dropdown.
-   * If `EML_REACH_RS2` is present, select it.
-   * If `EML_REACH_RS2` is not listed in the IBGE dropdown, select **`ADVNULLANTENNA NONE`** (generic null antenna).
+   - Check if `EML_REACH_RS2 NONE` appears in the antenna selection dropdown.
+   - If `EML_REACH_RS2` is present, select it.
+   - If `EML_REACH_RS2` is not listed in the IBGE dropdown, select **`ADVNULLANTENNA NONE`** (generic null antenna).
 5. **Altura da Antena (Antenna Height):**
-   * The height entered here must be measured vertically from the physical ground mark to the **Antenna Reference Point (ARP)**.
-   * **If `EML_REACH_RS2` is selected:** Enter your measured survey pole/tripod height (e.g., `2.000` m). The IBGE calibration table will apply the internal $0.134\text{ m}$ phase center offset automatically.
-   * **If `ADVNULLANTENNA` is selected:** A null antenna has no internal offset table ($0\text{ mm}$). You must manually add the Reach RS2 phase center offset ($0.134\text{ m}$) to your measured pole height ($2.000 + 0.134 = \mathbf{2.134\text{ m}}$) so that your final coordinates represent the ground marker!
+   - The height entered here must be measured vertically from the physical ground mark to the **Antenna Reference Point (ARP)**.
+   - **If `EML_REACH_RS2` is selected:** Enter your measured survey pole/tripod height (e.g., `2.000` m). The IBGE calibration table will apply the internal $0.134\text{ m}$ phase center offset automatically.
+   - **If `ADVNULLANTENNA` is selected:** A null antenna has no internal offset table ($0\text{ mm}$). You must manually add the Reach RS2 phase center offset ($0.134\text{ m}$) to your measured pole height ($2.000 + 0.134 = \mathbf{2.134\text{ m}}$) so that your final coordinates represent the ground marker!
 6. **Tipo de Medição (Measurement Type):**
-   * Select **Vertical** (height measured straight along the plumb line).
+   - Select **Vertical** (height measured straight along the plumb line).
 7. **Arquivo de Observação (Observation File):**
-   * Click **Choose File** and select your 30-second decimated RINEX file (e.g., `rover_30s.26o` or a `.zip` containing it).
+   - Click **Choose File** and select your 30-second decimated RINEX file (e.g., `rover_30s.26o` or a `.zip` containing it).
 8. Click **Processar** (Process).
 
 ---
@@ -147,8 +147,8 @@ Intervalo de Coleta:          30.0 s
 Órbitas Utilizadas:           IGS Final (ou IGR Rápida)
 ========================================================================
 ```
-* **Duração (Duration):** Confirms total static occupation time. For centimeter precision, ensure duration is $\ge 2\text{ to }4\text{ hours}$.
-* **Órbitas (Orbits):** Confirms whether `Final` or `Rápida` orbits were applied.
+- **Duração (Duration):** Confirms total static occupation time. For centimeter precision, ensure duration is $\ge 2\text{ to }4\text{ hours}$.
+- **Órbitas (Orbits):** Confirms whether `Final` or `Rápida` orbits were applied.
 
 ---
 
@@ -174,9 +174,9 @@ COORDENADAS GEODÉSICAS (SISTEMA DE REFERÊNCIA: SIRGAS2000)
 
 ::: {.callout-important}
 ### Which Coordinates Should You Use in Your Thesis or Paper?
-* **Use Epoch 2000.4** if you are integrating your GNSS data with official Brazilian cartography, INCRA land registries, IBGE vector layers, or comparing against historical benchmarks.
-* **Use Epoch of Collection** if you are conducting precise real-time kinematic velocity studies or calculating baseline vectors directly with local instruments measured in the same week.
-* Always explicitly state the reference epoch in your methods section (e.g., *"Coordinates were determined in SIRGAS2000 (epoch 2000.4) via IBGE PPP"*).
+- **Use Epoch 2000.4** if you are integrating your GNSS data with official Brazilian cartography, INCRA land registries, IBGE vector layers, or comparing against historical benchmarks.
+- **Use Epoch of Collection** if you are conducting precise real-time kinematic velocity studies or calculating baseline vectors directly with local instruments measured in the same week.
+- Always explicitly state the reference epoch in your methods section (e.g., *"Coordinates were determined in SIRGAS2000 (epoch 2000.4) via IBGE PPP"*).
 :::
 
 ---
@@ -195,9 +195,9 @@ Altitude Ortométrica (H):    55.860 m  (H = h - N)
 ========================================================================
 ```
 
-* **Altitude Elipsoidal ($h$):** The raw geometric height above the GRS80 ellipsoid ($84.310\text{ m}$).
-* **Ondulação Geoidal ($N$):** The geoid separation interpolated from the official IBGE national geoid model MAPGEO2015 ($+28.450\text{ m}$).
-* **Altitude Ortométrica ($H$):** Your true ground elevation above mean sea level ($55.860\text{ m}$). **This is the elevation to report for hydrologic, ecological, and topographical research.**
+- **Altitude Elipsoidal ($h$):** The raw geometric height above the GRS80 ellipsoid ($84.310\text{ m}$).
+- **Ondulação Geoidal ($N$):** The geoid separation interpolated from the official IBGE national geoid model MAPGEO2015 ($+28.450\text{ m}$).
+- **Altitude Ortométrica ($H$):** Your true ground elevation above mean sea level ($55.860\text{ m}$). **This is the elevation to report for hydrologic, ecological, and topographical research.**
 
 ---
 

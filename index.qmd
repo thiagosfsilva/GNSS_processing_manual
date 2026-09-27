@@ -1,50 +1,55 @@
 ---
-title: "Post-Processing GNSS Acquisitions in Brazil: A Practical Guide for Researchers"
-subtitle: "From Raw Field Observations to Centimeter-Grade Coordinates: IBGE RBMC, Emlid Studio PPK, RTKlib, and IBGE PPP"
+title: "Post-Processing GNSS Acquisitions in Brazil: A Practical Guide"
+subtitle: "From Field Observations to Centimeter-Grade Coordinates: IBGE RBMC, Emlid Studio PPK, RTKlib, and IBGE PPP"
 author:
   - name: "Thiago S. F. Silva"
     affiliation: "University of Stirling / University of Manchester"
 date: today
-format:
-  html:
-    toc: true
-    toc-depth: 3
-    toc-title: "Guide Navigation"
-    number-sections: true
 ---
 
-# Executive Overview {.unnumbered}
+# Introduction {.unnumbered}
 
-Accurate spatial positioning is essential for environmental monitoring, ecosystem ecology, and remote sensing. In dynamic environments such as Amazonian floodplains and neotropical wetlands, centimeter-level horizontal coordinates and reliable vertical datums are required to align drone lidar, calibrate satellite altimetry, and track seasonal flood-pulse variations.
+Accurate spatial positioning is essential for environmental monitoring and remote sensing. RTK (Real Time Kinematic) enabled GNSS (Global Navigation Satellite System)is the most common method for obtaining centimeter-level positioning, but when working in remote field sites without cellular internet or wi-fi, RTK positioning is not possible. Field researchers must thus record raw satellite observations and post-process them in the office.
 
-When working in remote field sites without cellular internet, real-time RTK positioning is unavailable. Field researchers must record raw satellite observations and post-process them in the office.
-
-This manual provides an end-to-end, pedagogical walkthrough for graduate students and early-career researchers with no prior geodetic post-processing experience.
+This manual provides an end-to-end walk-through for researchers with no prior geodetic post-processing experience. The examples given are based on processing locations acquired using the Emlid Reach RS2 GNSS receiver within Brazil, but the procedures are the same worldwide. Just the instruments and data providers will change. 
 
 ```{mermaid}
 flowchart LR
     A[Chapter 1<br/>Foundations & Geodesy] --> B[Chapter 2<br/>IBGE RBMC Data Retrieval]
     B --> C[Chapter 3<br/>Emlid Studio PPK]
-    C -. Long Baselines .-> D[Chapter 4<br/>RTKlib 30s Decimation]
-    D --> E[Chapter 5<br/>IBGE PPP Online Submission]
-    E --> F[Chapter 6<br/>Troubleshooting & QC]
+    C --> D[Chapter 6<br/>Troubleshooting & QC]
 
-    style A fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
-    style B fill:#e1f5fe,stroke:#0288d1,stroke-width:2px
-    style C fill:#e8f5e9,stroke:#388e3c,stroke-width:2px
-    style D fill:#fff8e1,stroke:#ffa000,stroke-width:2px
-    style E fill:#fff3e0,stroke:#f57c00,stroke-width:2px
-    style F fill:#ffebee,stroke:#d32f2f,stroke-width:2px
+    style A fill:#BBCCEE,stroke:#4477AA,stroke-width:2px
+    style B fill:#CCDDAA,stroke:#228833,stroke-width:2px
+    style C fill:#CCEEFF,stroke:#225555,stroke-width:2px
+    style D fill:#FFCCCC,stroke:#CC6677,stroke-width:2px
+```
+
+```{mermaid}
+flowchart LR
+    S[Long Baselines] -.-> A[Chapter 4<br/>RTKlib 30s Decimation]
+    A --> B[Chapter 5<br/>IBGE PPP Online Submission]
+    B --> C[Chapter 6<br/>Troubleshooting & QC]
+
+    style S fill:none,stroke:none
+    style A fill:fill:#DDDDDD,stroke:#555555,stroke-width:2px
+    style B fill:#fff8e1,stroke:#ffa000,stroke-width:2px
+    style C fill:#FFCCCC,stroke:#CC6677,stroke-width:2px
 ```
 
 ## Structure of this Manual
 
 1. **[Foundations of GNSS Post-Processing for Field Researchers](#sec-foundations):** Explains relative (PPK) vs. absolute (PPP) positioning, the Brazilian SIRGAS2000 reference frame, the critical difference between ellipsoidal ($h$) and orthometric ($H$) heights, and antenna geometry (ARP vs. APC).
+
 2. **[Downloading and Preparing IBGE RBMC Reference Station Data](#sec-ibge-rbmc):** Guides you through finding the nearest reference station in the Brazilian continuous network, downloading 24-hour observation and broadcast navigation files from GeoFTP, interpreting official station reports (*Relatório da Estação*), and decompressing Hatanaka files with `CRX2RNX`.
-3. **[Post-Processing Kinematic (PPK) in Emlid Studio](#sec-emlid-studio-ppk):** Walkthrough of the Emlid Studio GUI on Windows, pairing raw Emlid Reach RS2 logs with RBMC base station data, configuring the 134 mm antenna offset, overriding base station coordinates, and evaluating Fix vs. Float solutions.
+
+3. **[Relative Post-Processing in Emlid Studio: Static Baselines](#sec-emlid-studio-ppk):** Walk through of the Emlid Studio GUI on Windows, pairing stationary Emlid Reach RS2 benchmark logs with RBMC base station data, configuring the antenna offset, overriding base station coordinates, and evaluating Fix vs. Float static solutions.
+
 4. **[Preparing RINEX Observations with RTKlib: 30-Second Decimation and Formatting](#sec-rtklib-prep):** Explains why static PPP requires 30-second epoch intervals, and provides a step-by-step tutorial using the RTKCONV GUI to decimate high-rate files and format standard headers.
-5. **[Submitting to IBGE PPP and Interpreting Geodetic Reports](#sec-ibge-ppp):** Details online submission to the IBGE PPP service, choosing antenna calibration models, and reading the official PDF report to extract SIRGAS2000 coordinates, formal standard deviations, and MAPGEO2015 orthometric heights.
-6. **[Troubleshooting, Practical Pitfalls, and Field Checklist](#sec-troubleshooting):** Diagnoses common issues (the "Float-only" trap, canopy cycle slips, Hatanaka ingestion failures, height offset errors) and provides a field checklist for future campaigns.
+
+5. **[Submitting to IBGE PPP and Interpreting Geodetic Reports](#sec-ibge-ppp):** Details online submission to the IBGE PPP service, choosing antenna calibration models, and reading the official PDF report to extract SIRGAS2000 coordinates, formal standard deviations, and orthometric heights.
+
+6. **[Troubleshooting, Practical Pitfalls, and Field Checklist](#sec-troubleshooting):** Diagnoses common issues (the "Float-only" trap, canopy cycle slips, Hatanaka ingestion failures, height offset errors) and provides a field checklist.
 
 ---
 
