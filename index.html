@@ -1,0 +1,2280 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Thiago S. F. Silva">
+<meta name="dcterms.date" content="2026-09-27">
+
+<title>Post-Processing GNSS Acquisitions in Brazil: A Practical Guide</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="index_files/libs/clipboard/clipboard.min.js"></script>
+<script src="index_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="index_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="index_files/libs/quarto-html/popper.min.js"></script>
+<script src="index_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="index_files/libs/quarto-html/anchor.min.js"></script>
+<link href="index_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="index_files/libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="index_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="index_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="index_files/libs/bootstrap/bootstrap-d7a6c2cf76d12a63d7a00478dc4f37b1.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<style>html{ scroll-behavior: smooth; }</style>
+<meta name="mermaid-theme" content="neutral">
+<script src="index_files/libs/quarto-diagram/mermaid.min.js"></script>
+<script src="index_files/libs/quarto-diagram/mermaid-init.js"></script>
+<link href="index_files/libs/quarto-diagram/mermaid.css" rel="stylesheet">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-chtml.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of Contents</h2>
+   
+  <ul>
+  <li><a href="#introduction" id="toc-introduction" class="nav-link active" data-scroll-target="#introduction">Introduction</a>
+  <ul class="collapse">
+  <li><a href="#structure-of-this-manual" id="toc-structure-of-this-manual" class="nav-link" data-scroll-target="#structure-of-this-manual"><span class="header-section-number">0.1</span> Structure of this Manual</a></li>
+  </ul></li>
+  <li><a href="#sec-foundations" id="toc-sec-foundations" class="nav-link" data-scroll-target="#sec-foundations"><span class="header-section-number">1</span> Foundations of GNSS Post-Processing for Field Researchers</a>
+  <ul class="collapse">
+  <li><a href="#why-post-process-gnss-data" id="toc-why-post-process-gnss-data" class="nav-link" data-scroll-target="#why-post-process-gnss-data"><span class="header-section-number">1.1</span> Why Post-Process GNSS Data?</a></li>
+  <li><a href="#two-fundamental-post-processing-pathways-ppk-vs.-ppp" id="toc-two-fundamental-post-processing-pathways-ppk-vs.-ppp" class="nav-link" data-scroll-target="#two-fundamental-post-processing-pathways-ppk-vs.-ppp"><span class="header-section-number">1.2</span> Two Fundamental Post-Processing Pathways: PPK vs.&nbsp;PPP</a>
+  <ul class="collapse">
+  <li><a href="#post-processed-kinematic-ppk-relative-positioning" id="toc-post-processed-kinematic-ppk-relative-positioning" class="nav-link" data-scroll-target="#post-processed-kinematic-ppk-relative-positioning"><span class="header-section-number">1.2.1</span> Post-Processed Kinematic (PPK) / Relative Positioning</a></li>
+  <li><a href="#precise-point-positioning-ppp-absolute-positioning" id="toc-precise-point-positioning-ppp-absolute-positioning" class="nav-link" data-scroll-target="#precise-point-positioning-ppp-absolute-positioning"><span class="header-section-number">1.2.2</span> Precise Point Positioning (PPP) / Absolute Positioning</a></li>
+  </ul></li>
+  <li><a href="#the-brazilian-geodetic-reference-frame-sirgas2000" id="toc-the-brazilian-geodetic-reference-frame-sirgas2000" class="nav-link" data-scroll-target="#the-brazilian-geodetic-reference-frame-sirgas2000"><span class="header-section-number">1.3</span> The Brazilian Geodetic Reference Frame: SIRGAS2000</a>
+  <ul class="collapse">
+  <li><a href="#geodetic-parameters-of-sirgas2000" id="toc-geodetic-parameters-of-sirgas2000" class="nav-link" data-scroll-target="#geodetic-parameters-of-sirgas2000"><span class="header-section-number">1.3.1</span> Geodetic Parameters of SIRGAS2000</a></li>
+  </ul></li>
+  <li><a href="#vertical-datums-ellipsoidal-h-vs.-orthometric-h-heights" id="toc-vertical-datums-ellipsoidal-h-vs.-orthometric-h-heights" class="nav-link" data-scroll-target="#vertical-datums-ellipsoidal-h-vs.-orthometric-h-heights"><span class="header-section-number">1.4</span> Vertical Datums: Ellipsoidal (<span class="math inline">\(h\)</span>) vs.&nbsp;Orthometric (<span class="math inline">\(H\)</span>) Heights</a>
+  <ul class="collapse">
+  <li><a href="#mathematical-definitions" id="toc-mathematical-definitions" class="nav-link" data-scroll-target="#mathematical-definitions"><span class="header-section-number">1.4.1</span> Mathematical Definitions</a></li>
+  </ul></li>
+  <li><a href="#antenna-geometry-arp-apc-and-phase-center-offsets" id="toc-antenna-geometry-arp-apc-and-phase-center-offsets" class="nav-link" data-scroll-target="#antenna-geometry-arp-apc-and-phase-center-offsets"><span class="header-section-number">1.5</span> Antenna Geometry: ARP, APC, and Phase Center Offsets</a>
+  <ul class="collapse">
+  <li><a href="#key-reference-definitions" id="toc-key-reference-definitions" class="nav-link" data-scroll-target="#key-reference-definitions"><span class="header-section-number">1.5.1</span> Key Reference Definitions</a></li>
+  <li><a href="#emlid-reach-rs2-antenna-offsets" id="toc-emlid-reach-rs2-antenna-offsets" class="nav-link" data-scroll-target="#emlid-reach-rs2-antenna-offsets"><span class="header-section-number">1.5.2</span> Emlid Reach RS2 Antenna Offsets</a></li>
+  </ul></li>
+  </ul></li>
+  <li><a href="#sec-ibge-rbmc" id="toc-sec-ibge-rbmc" class="nav-link" data-scroll-target="#sec-ibge-rbmc"><span class="header-section-number">2</span> Downloading and Preparing IBGE RBMC Reference Station Data</a>
+  <ul class="collapse">
+  <li><a href="#overview-of-the-ibge-rbmc-network" id="toc-overview-of-the-ibge-rbmc-network" class="nav-link" data-scroll-target="#overview-of-the-ibge-rbmc-network"><span class="header-section-number">2.1</span> Overview of the IBGE RBMC Network</a></li>
+  <li><a href="#finding-the-nearest-rbmc-station" id="toc-finding-the-nearest-rbmc-station" class="nav-link" data-scroll-target="#finding-the-nearest-rbmc-station"><span class="header-section-number">2.2</span> Finding the Nearest RBMC Station</a>
+  <ul class="collapse">
+  <li><a href="#step-1-identifying-stations-via-the-ibge-interactive-map" id="toc-step-1-identifying-stations-via-the-ibge-interactive-map" class="nav-link" data-scroll-target="#step-1-identifying-stations-via-the-ibge-interactive-map"><span class="header-section-number">2.2.1</span> Step 1: Identifying Stations via the IBGE Interactive Map</a></li>
+  </ul></li>
+  <li><a href="#downloading-daily-rinex-files-from-ibge-geoftp" id="toc-downloading-daily-rinex-files-from-ibge-geoftp" class="nav-link" data-scroll-target="#downloading-daily-rinex-files-from-ibge-geoftp"><span class="header-section-number">2.3</span> Downloading Daily RINEX Files from IBGE GeoFTP</a>
+  <ul class="collapse">
+  <li><a href="#understanding-the-geoftp-folder-hierarchy" id="toc-understanding-the-geoftp-folder-hierarchy" class="nav-link" data-scroll-target="#understanding-the-geoftp-folder-hierarchy"><span class="header-section-number">2.3.1</span> Understanding the GeoFTP Folder Hierarchy</a></li>
+  <li><a href="#file-naming-conventions-decoded" id="toc-file-naming-conventions-decoded" class="nav-link" data-scroll-target="#file-naming-conventions-decoded"><span class="header-section-number">2.3.2</span> File Naming Conventions Decoded</a></li>
+  </ul></li>
+  <li><a href="#retrieving-the-station-report-relatório-da-estação" id="toc-retrieving-the-station-report-relatório-da-estação" class="nav-link" data-scroll-target="#retrieving-the-station-report-relatório-da-estação"><span class="header-section-number">2.4</span> Retrieving the Station Report (<em>Relatório da Estação</em>)</a></li>
+  <li><a href="#decompressing-hatanaka-compact-rinex-crx2rnx" id="toc-decompressing-hatanaka-compact-rinex-crx2rnx" class="nav-link" data-scroll-target="#decompressing-hatanaka-compact-rinex-crx2rnx"><span class="header-section-number">2.5</span> Decompressing Hatanaka Compact RINEX (<code>CRX2RNX</code>)</a>
+  <ul class="collapse">
+  <li><a href="#what-is-hatanaka-compression" id="toc-what-is-hatanaka-compression" class="nav-link" data-scroll-target="#what-is-hatanaka-compression"><span class="header-section-number">2.5.1</span> What is Hatanaka Compression?</a></li>
+  <li><a href="#step-by-step-decompression-on-windows" id="toc-step-by-step-decompression-on-windows" class="nav-link" data-scroll-target="#step-by-step-decompression-on-windows"><span class="header-section-number">2.5.2</span> Step-by-Step Decompression on Windows</a></li>
+  </ul></li>
+  </ul></li>
+  <li><a href="#sec-emlid-studio-ppk" id="toc-sec-emlid-studio-ppk" class="nav-link" data-scroll-target="#sec-emlid-studio-ppk"><span class="header-section-number">3</span> Post-Processing Kinematic (PPK) in Emlid Studio</a>
+  <ul class="collapse">
+  <li><a href="#introduction-to-emlid-studio" id="toc-introduction-to-emlid-studio" class="nav-link" data-scroll-target="#introduction-to-emlid-studio"><span class="header-section-number">3.1</span> Introduction to Emlid Studio</a>
+  <ul class="collapse">
+  <li><a href="#downloading-and-installing-on-windows" id="toc-downloading-and-installing-on-windows" class="nav-link" data-scroll-target="#downloading-and-installing-on-windows"><span class="header-section-number">3.1.1</span> Downloading and Installing on Windows</a></li>
+  </ul></li>
+  <li><a href="#kinematic-vs.-static-workflows" id="toc-kinematic-vs.-static-workflows" class="nav-link" data-scroll-target="#kinematic-vs.-static-workflows"><span class="header-section-number">3.2</span> Kinematic vs.&nbsp;Static Workflows</a></li>
+  <li><a href="#step-by-step-ppk-configuration-kinematic-workflow" id="toc-step-by-step-ppk-configuration-kinematic-workflow" class="nav-link" data-scroll-target="#step-by-step-ppk-configuration-kinematic-workflow"><span class="header-section-number">3.3</span> Step-by-Step PPK Configuration (Kinematic Workflow)</a>
+  <ul class="collapse">
+  <li><a href="#step-1-loading-the-rover-observation-file" id="toc-step-1-loading-the-rover-observation-file" class="nav-link" data-scroll-target="#step-1-loading-the-rover-observation-file"><span class="header-section-number">3.3.1</span> Step 1: Loading the Rover Observation File</a></li>
+  <li><a href="#step-2-loading-the-ibge-rbmc-base-observation-file" id="toc-step-2-loading-the-ibge-rbmc-base-observation-file" class="nav-link" data-scroll-target="#step-2-loading-the-ibge-rbmc-base-observation-file"><span class="header-section-number">3.3.2</span> Step 2: Loading the IBGE RBMC Base Observation File</a></li>
+  <li><a href="#step-3-loading-the-navigation-file" id="toc-step-3-loading-the-navigation-file" class="nav-link" data-scroll-target="#step-3-loading-the-navigation-file"><span class="header-section-number">3.3.3</span> Step 3: Loading the Navigation File</a></li>
+  <li><a href="#step-4-fine-tuning-advanced-processing-settings" id="toc-step-4-fine-tuning-advanced-processing-settings" class="nav-link" data-scroll-target="#step-4-fine-tuning-advanced-processing-settings"><span class="header-section-number">3.3.4</span> Step 4: Fine-Tuning Advanced Processing Settings</a></li>
+  <li><a href="#step-5-processing-and-quality-control" id="toc-step-5-processing-and-quality-control" class="nav-link" data-scroll-target="#step-5-processing-and-quality-control"><span class="header-section-number">3.3.5</span> Step 5: Processing and Quality Control</a></li>
+  </ul></li>
+  <li><a href="#evaluating-the-solution-fix-vs.-float-vs.-single" id="toc-evaluating-the-solution-fix-vs.-float-vs.-single" class="nav-link" data-scroll-target="#evaluating-the-solution-fix-vs.-float-vs.-single"><span class="header-section-number">3.4</span> Evaluating the Solution: Fix vs.&nbsp;Float vs.&nbsp;Single</a></li>
+  <li><a href="#inspecting-and-exporting-solution-files" id="toc-inspecting-and-exporting-solution-files" class="nav-link" data-scroll-target="#inspecting-and-exporting-solution-files"><span class="header-section-number">3.5</span> Inspecting and Exporting Solution Files</a></li>
+  </ul></li>
+  <li><a href="#sec-rtklib-prep" id="toc-sec-rtklib-prep" class="nav-link" data-scroll-target="#sec-rtklib-prep"><span class="header-section-number">4</span> Preparing RINEX Observations with RTKlib: 30-Second Decimation and Formatting</a>
+  <ul class="collapse">
+  <li><a href="#why-decimate-records-to-30-second-intervals" id="toc-why-decimate-records-to-30-second-intervals" class="nav-link" data-scroll-target="#why-decimate-records-to-30-second-intervals"><span class="header-section-number">4.1</span> Why Decimate Records to 30-Second Intervals?</a></li>
+  <li><a href="#installing-rtklib-for-windows" id="toc-installing-rtklib-for-windows" class="nav-link" data-scroll-target="#installing-rtklib-for-windows"><span class="header-section-number">4.2</span> Installing RTKLIB for Windows</a></li>
+  <li><a href="#step-by-step-walkthrough-rtkconv-gui" id="toc-step-by-step-walkthrough-rtkconv-gui" class="nav-link" data-scroll-target="#step-by-step-walkthrough-rtkconv-gui"><span class="header-section-number">4.3</span> Step-by-Step Walkthrough: RTKCONV GUI</a>
+  <ul class="collapse">
+  <li><a href="#step-1-selecting-the-input-file-and-format" id="toc-step-1-selecting-the-input-file-and-format" class="nav-link" data-scroll-target="#step-1-selecting-the-input-file-and-format"><span class="header-section-number">4.3.1</span> Step 1: Selecting the Input File and Format</a></li>
+  <li><a href="#step-2-defining-output-file-paths" id="toc-step-2-defining-output-file-paths" class="nav-link" data-scroll-target="#step-2-defining-output-file-paths"><span class="header-section-number">4.3.2</span> Step 2: Defining Output File Paths</a></li>
+  <li><a href="#step-3-configuring-decimation-and-rinex-options" id="toc-step-3-configuring-decimation-and-rinex-options" class="nav-link" data-scroll-target="#step-3-configuring-decimation-and-rinex-options"><span class="header-section-number">4.3.3</span> Step 3: Configuring Decimation and RINEX Options</a></li>
+  <li><a href="#step-4-executing-conversion" id="toc-step-4-executing-conversion" class="nav-link" data-scroll-target="#step-4-executing-conversion"><span class="header-section-number">4.3.4</span> Step 4: Executing Conversion</a></li>
+  </ul></li>
+  <li><a href="#verifying-the-decimated-file-header" id="toc-verifying-the-decimated-file-header" class="nav-link" data-scroll-target="#verifying-the-decimated-file-header"><span class="header-section-number">4.4</span> Verifying the Decimated File Header</a></li>
+  <li><a href="#command-line-alternative-convbin" id="toc-command-line-alternative-convbin" class="nav-link" data-scroll-target="#command-line-alternative-convbin"><span class="header-section-number">4.5</span> Command-Line Alternative: <code>convbin</code></a>
+  <ul class="collapse">
+  <li><a href="#explanation-of-command-line-flags" id="toc-explanation-of-command-line-flags" class="nav-link" data-scroll-target="#explanation-of-command-line-flags"><span class="header-section-number">4.5.1</span> Explanation of Command-Line Flags</a></li>
+  </ul></li>
+  </ul></li>
+  <li><a href="#sec-ibge-ppp" id="toc-sec-ibge-ppp" class="nav-link" data-scroll-target="#sec-ibge-ppp"><span class="header-section-number">5</span> Submitting to IBGE PPP and Interpreting Geodetic Reports</a>
+  <ul class="collapse">
+  <li><a href="#what-is-ibge-ppp" id="toc-what-is-ibge-ppp" class="nav-link" data-scroll-target="#what-is-ibge-ppp"><span class="header-section-number">5.1</span> What is IBGE PPP?</a></li>
+  <li><a href="#timing-your-submission-satellite-ephemeris-tiers" id="toc-timing-your-submission-satellite-ephemeris-tiers" class="nav-link" data-scroll-target="#timing-your-submission-satellite-ephemeris-tiers"><span class="header-section-number">5.2</span> Timing Your Submission: Satellite Ephemeris Tiers</a></li>
+  <li><a href="#step-by-step-submission-walkthrough" id="toc-step-by-step-submission-walkthrough" class="nav-link" data-scroll-target="#step-by-step-submission-walkthrough"><span class="header-section-number">5.3</span> Step-by-Step Submission Walkthrough</a>
+  <ul class="collapse">
+  <li><a href="#step-1-accessing-the-portal" id="toc-step-1-accessing-the-portal" class="nav-link" data-scroll-target="#step-1-accessing-the-portal"><span class="header-section-number">5.3.1</span> Step 1: Accessing the Portal</a></li>
+  <li><a href="#step-2-filling-in-the-online-form" id="toc-step-2-filling-in-the-online-form" class="nav-link" data-scroll-target="#step-2-filling-in-the-online-form"><span class="header-section-number">5.3.2</span> Step 2: Filling in the Online Form</a></li>
+  <li><a href="#step-3-retrieving-results" id="toc-step-3-retrieving-results" class="nav-link" data-scroll-target="#step-3-retrieving-results"><span class="header-section-number">5.3.3</span> Step 3: Retrieving Results</a></li>
+  </ul></li>
+  <li><a href="#decoding-the-ibge-ppp-pdf-report" id="toc-decoding-the-ibge-ppp-pdf-report" class="nav-link" data-scroll-target="#decoding-the-ibge-ppp-pdf-report"><span class="header-section-number">5.4</span> Decoding the IBGE PPP PDF Report</a>
+  <ul class="collapse">
+  <li><a href="#section-1-processing-metadata" id="toc-section-1-processing-metadata" class="nav-link" data-scroll-target="#section-1-processing-metadata"><span class="header-section-number">5.4.1</span> Section 1: Processing Metadata</a></li>
+  <li><a href="#section-2-coordinates-in-sirgas2000-measurement-epoch-vs.-epoch-2000.4" id="toc-section-2-coordinates-in-sirgas2000-measurement-epoch-vs.-epoch-2000.4" class="nav-link" data-scroll-target="#section-2-coordinates-in-sirgas2000-measurement-epoch-vs.-epoch-2000.4"><span class="header-section-number">5.4.2</span> Section 2: Coordinates in SIRGAS2000 (Measurement Epoch vs.&nbsp;Epoch 2000.4)</a></li>
+  <li><a href="#section-3-physical-elevation-orthometric-height-via-mapgeo2015" id="toc-section-3-physical-elevation-orthometric-height-via-mapgeo2015" class="nav-link" data-scroll-target="#section-3-physical-elevation-orthometric-height-via-mapgeo2015"><span class="header-section-number">5.4.3</span> Section 3: Physical Elevation (Orthometric Height via MAPGEO2015)</a></li>
+  <li><a href="#section-4-precision-and-confidence-metrics" id="toc-section-4-precision-and-confidence-metrics" class="nav-link" data-scroll-target="#section-4-precision-and-confidence-metrics"><span class="header-section-number">5.4.4</span> Section 4: Precision and Confidence Metrics</a></li>
+  <li><a href="#publication-acceptance-thresholds" id="toc-publication-acceptance-thresholds" class="nav-link" data-scroll-target="#publication-acceptance-thresholds"><span class="header-section-number">5.4.5</span> Publication Acceptance Thresholds</a></li>
+  </ul></li>
+  </ul></li>
+  <li><a href="#sec-troubleshooting" id="toc-sec-troubleshooting" class="nav-link" data-scroll-target="#sec-troubleshooting"><span class="header-section-number">6</span> Troubleshooting, Practical Pitfalls, and Field Checklist</a>
+  <ul class="collapse">
+  <li><a href="#the-four-most-common-pitfalls-and-how-to-fix-them" id="toc-the-four-most-common-pitfalls-and-how-to-fix-them" class="nav-link" data-scroll-target="#the-four-most-common-pitfalls-and-how-to-fix-them"><span class="header-section-number">6.1</span> The Four Most Common Pitfalls and How to Fix Them</a>
+  <ul class="collapse">
+  <li><a href="#pitfall-1-the-float-only-trap-in-emlid-studio" id="toc-pitfall-1-the-float-only-trap-in-emlid-studio" class="nav-link" data-scroll-target="#pitfall-1-the-float-only-trap-in-emlid-studio"><span class="header-section-number">6.1.1</span> Pitfall 1: The “Float-Only” Trap in Emlid Studio</a></li>
+  <li><a href="#pitfall-2-rbmc-file-ingestion-errors-0-valid-epochs" id="toc-pitfall-2-rbmc-file-ingestion-errors-0-valid-epochs" class="nav-link" data-scroll-target="#pitfall-2-rbmc-file-ingestion-errors-0-valid-epochs"><span class="header-section-number">6.1.2</span> Pitfall 2: RBMC File Ingestion Errors (“0 Valid Epochs”)</a></li>
+  <li><a href="#pitfall-3-ibge-ppp-file-rejection" id="toc-pitfall-3-ibge-ppp-file-rejection" class="nav-link" data-scroll-target="#pitfall-3-ibge-ppp-file-rejection"><span class="header-section-number">6.1.3</span> Pitfall 3: IBGE PPP File Rejection</a></li>
+  <li><a href="#pitfall-4-the-134-mm-height-offset-error" id="toc-pitfall-4-the-134-mm-height-offset-error" class="nav-link" data-scroll-target="#pitfall-4-the-134-mm-height-offset-error"><span class="header-section-number">6.1.4</span> Pitfall 4: The 134 mm Height Offset Error</a></li>
+  </ul></li>
+  <li><a href="#field-protocol-checklist-for-flawless-post-processing" id="toc-field-protocol-checklist-for-flawless-post-processing" class="nav-link" data-scroll-target="#field-protocol-checklist-for-flawless-post-processing"><span class="header-section-number">6.2</span> Field Protocol Checklist for Flawless Post-Processing</a>
+  <ul class="collapse">
+  <li><a href="#pre-field-preparation" id="toc-pre-field-preparation" class="nav-link" data-scroll-target="#pre-field-preparation"><span class="header-section-number">6.2.1</span> 1. Pre-Field Preparation</a></li>
+  <li><a href="#during-field-survey" id="toc-during-field-survey" class="nav-link" data-scroll-target="#during-field-survey"><span class="header-section-number">6.2.2</span> 2. During Field Survey</a></li>
+  <li><a href="#post-field-data-management" id="toc-post-field-data-management" class="nav-link" data-scroll-target="#post-field-data-management"><span class="header-section-number">6.2.3</span> 3. Post-Field Data Management</a></li>
+  </ul></li>
+  </ul></li>
+  </ul>
+</nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Post-Processing GNSS Acquisitions in Brazil: A Practical Guide</h1>
+<p class="subtitle lead">From Field Observations to Centimeter-Grade Coordinates: IBGE RBMC, Emlid Studio PPK, RTKlib, and IBGE PPP</p>
+</div>
+
+
+<div class="quarto-title-meta-author">
+  <div class="quarto-title-meta-heading">Author</div>
+  <div class="quarto-title-meta-heading">Affiliation</div>
+  
+    <div class="quarto-title-meta-contents">
+    <p class="author">Thiago S. F. Silva </p>
+  </div>
+  <div class="quarto-title-meta-contents">
+        <p class="affiliation">
+            University of Stirling / University of Manchester
+          </p>
+      </div>
+  </div>
+
+<div class="quarto-title-meta">
+
+      
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">2026-09-27</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="introduction" class="level1 unnumbered">
+<h1 class="unnumbered">Introduction</h1>
+<p>Accurate spatial positioning is essential for environmental monitoring and remote sensing. RTK (Real Time Kinematic) enabled GNSS (Global Navigation Satellite System)is the most common method for obtaining centimeter-level positioning, but when working in remote field sites without cellular internet or wi-fi, RTK positioning is not possible. Field researchers must thus record raw satellite observations and post-process them in the office.</p>
+<p>This manual provides an end-to-end walk-through for researchers with no prior geodetic post-processing experience. The examples given are based on processing locations acquired using the Emlid Reach RS2 GNSS receiver within Brazil, but the procedures are the same worldwide. Just the instruments and data providers will change.</p>
+<div class="cell" data-layout-align="default">
+<div class="cell-output-display">
+<div>
+<p></p><figure class="figure"><p></p>
+<div>
+<pre class="mermaid mermaid-js">flowchart LR
+    A[Chapter 1&lt;br/&gt;Foundations &amp; Geodesy] --&gt; B[Chapter 2&lt;br/&gt;IBGE RBMC Data Retrieval]
+    B --&gt; C[Chapter 3&lt;br/&gt;Emlid Studio PPK]
+    C --&gt; D[Chapter 6&lt;br/&gt;Troubleshooting &amp; QC]
+
+    style A fill:#BBCCEE,stroke:#4477AA,stroke-width:2px
+    style B fill:#CCDDAA,stroke:#228833,stroke-width:2px
+    style C fill:#CCEEFF,stroke:#225555,stroke-width:2px
+    style D fill:#FFCCCC,stroke:#CC6677,stroke-width:2px
+</pre>
+</div>
+<p></p></figure><p></p>
+</div>
+</div>
+</div>
+<div class="cell" data-layout-align="default">
+<div class="cell-output-display">
+<div>
+<p></p><figure class="figure"><p></p>
+<div>
+<pre class="mermaid mermaid-js">flowchart LR
+    S[Long Baselines] -.-&gt; A[Chapter 4&lt;br/&gt;RTKlib 30s Decimation]
+    A --&gt; B[Chapter 5&lt;br/&gt;IBGE PPP Online Submission]
+    B --&gt; C[Chapter 6&lt;br/&gt;Troubleshooting &amp; QC]
+
+    style S fill:none,stroke:none
+    style A fill:fill:#DDDDDD,stroke:#555555,stroke-width:2px
+    style B fill:#fff8e1,stroke:#ffa000,stroke-width:2px
+    style C fill:#FFCCCC,stroke:#CC6677,stroke-width:2px
+</pre>
+</div>
+<p></p></figure><p></p>
+</div>
+</div>
+</div>
+<section id="structure-of-this-manual" class="level2" data-number="0.1">
+<h2 data-number="0.1" class="anchored" data-anchor-id="structure-of-this-manual"><span class="header-section-number">0.1</span> Structure of this Manual</h2>
+<ol type="1">
+<li><p><strong><a href="#sec-foundations">Foundations of GNSS Post-Processing for Field Researchers</a>:</strong> Explains relative (PPK) vs.&nbsp;absolute (PPP) positioning, the Brazilian SIRGAS2000 reference frame, the critical difference between ellipsoidal (<span class="math inline">\(h\)</span>) and orthometric (<span class="math inline">\(H\)</span>) heights, and antenna geometry (ARP vs.&nbsp;APC).</p></li>
+<li><p><strong><a href="#sec-ibge-rbmc">Downloading and Preparing IBGE RBMC Reference Station Data</a>:</strong> Guides you through finding the nearest reference station in the Brazilian continuous network, downloading 24-hour observation and broadcast navigation files from GeoFTP, interpreting official station reports (<em>Relatório da Estação</em>), and decompressing Hatanaka files with <code>CRX2RNX</code>.</p></li>
+<li><p><strong><a href="#sec-emlid-studio-ppk">Relative Post-Processing in Emlid Studio: Static Baselines</a>:</strong> Walk through of the Emlid Studio GUI on Windows, pairing stationary Emlid Reach RS2 benchmark logs with RBMC base station data, configuring the antenna offset, overriding base station coordinates, and evaluating Fix vs.&nbsp;Float static solutions.</p></li>
+<li><p><strong><a href="#sec-rtklib-prep">Preparing RINEX Observations with RTKlib: 30-Second Decimation and Formatting</a>:</strong> Explains why static PPP requires 30-second epoch intervals, and provides a step-by-step tutorial using the RTKCONV GUI to decimate high-rate files and format standard headers.</p></li>
+<li><p><strong><a href="#sec-ibge-ppp">Submitting to IBGE PPP and Interpreting Geodetic Reports</a>:</strong> Details online submission to the IBGE PPP service, choosing antenna calibration models, and reading the official PDF report to extract SIRGAS2000 coordinates, formal standard deviations, and orthometric heights.</p></li>
+<li><p><strong><a href="#sec-troubleshooting">Troubleshooting, Practical Pitfalls, and Field Checklist</a>:</strong> Diagnoses common issues (the “Float-only” trap, canopy cycle slips, Hatanaka ingestion failures, height offset errors) and provides a field checklist.</p></li>
+</ol>
+<hr>
+</section>
+</section>
+<section id="sec-foundations" class="level1" data-number="1">
+<h1 data-number="1"><span class="header-section-number">1</span> Foundations of GNSS Post-Processing for Field Researchers</h1>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Purpose of this Chapter
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>This chapter establishes the core geodetic and spatial concepts required to post-process GNSS observations acquired in Brazil. If you are an ecologist, geographer, or environmental scientist who has collected GNSS data with an Emlid Reach receiver and needs to convert raw field logs into publishable, centimeter-accurate coordinates, this chapter provides the theoretical foundation you need before opening any software.</p>
+</div>
+</div>
+<section id="why-post-process-gnss-data" class="level2" data-number="1.1">
+<h2 data-number="1.1" class="anchored" data-anchor-id="why-post-process-gnss-data"><span class="header-section-number">1.1</span> Why Post-Process GNSS Data?</h2>
+<p>When a standalone GNSS receiver (such as an Emlid Reach RS2, a handheld GPS, or a smartphone) tracks satellite signals in the field, its real-time autonomous positioning error is typically <strong>2 to 5 meters</strong>. This error stems from several physical phenomena:</p>
+<ol type="1">
+<li><strong>Satellite Clock and Orbit Errors:</strong> Minor inaccuracies in satellite onboard atomic clocks and broadcast ephemerides (orbital positions).</li>
+<li><strong>Atmospheric Delays:</strong> Signal refraction and delay as radio waves pass through the ionosphere (electrically charged layer) and the troposphere (temperature, pressure, and water vapor gradients).</li>
+<li><strong>Multipath Interference:</strong> Signals bouncing off water surfaces, tree trunks, canopy foliage, or vehicles before reaching the antenna.</li>
+<li><strong>Receiver Noise:</strong> Internal thermal noise and hardware biases inside the antenna and receiver board.conservado, repovoamento, PSA</li>
+</ol>
+<p>In remote field campaigns—such as neotropical wetland surveys or remote Amazonian floodplains—cellular internet connectivity is often nonexistent. This makes <strong>Real-Time Kinematic (RTK)</strong> corrections via NTRIP impossible.</p>
+<p><strong>Post-processing</strong> solves this problem by recording raw satellite carrier phase and pseudorange measurements continuously to internal memory. Back in the office or basecamp, these raw logs are mathematically combined with precise satellite orbital data or reference station observations to eliminate common atmospheric and orbital errors, achieving <strong>sub-decimeter or centimeter-level precision</strong>.</p>
+<div class="cell" data-layout-align="default">
+<div class="cell-output-display">
+<div>
+<p></p><figure class="figure"><p></p>
+<div>
+<pre class="mermaid mermaid-js">flowchart TD
+    subgraph Raw Field Data
+        A[Emlid Reach RS2 Raw Log&lt;br/&gt;.UBX or .RINEX]
+    end
+
+    subgraph Office Post-Processing Pathways
+        A --&gt;|Pathway 1: Differential / Relative| B(PPK in Emlid Studio)
+        A --&gt;|Pathway 2: Autonomous / Absolute| C(Precise Point Positioning)
+    end
+
+    subgraph Pathway 1 Requirementsconservado, repovoamento, PSA
+        D[IBGE RBMC Base Station&lt;br/&gt;24h RINEX .obs + .nav] --&gt; B
+        B --&gt; E[Centimeter Baseline Solution&lt;br/&gt;Fix/Float .pos]
+    end
+
+    subgraph Pathway 2 Requirements
+        C --&gt; F[RTKCONV Decimation to 30s&lt;br/&gt;Clean RINEX]
+        F --&gt; G[IBGE PPP Online Service&lt;br/&gt;CSRS-PPP Engine + Precise Ephemeris]
+        G --&gt; H[Absolute Geodetic Coordinates&lt;br/&gt;SIRGAS2000 PDF Report + .pos]
+    end
+
+    style A fill:#e1f5fe,stroke:#0288d1,stroke-width:2px
+    style B fill:#e8f5e9,stroke:#388e3c,stroke-width:2px
+    style C fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    style E fill:#c8e6c9,stroke:#2e7d32,stroke-width:2px
+    style H fill:#ffe0b2,stroke:#ef6c00,stroke-width:2px
+</pre>
+</div>
+<p></p></figure><p></p>
+</div>
+</div>
+</div>
+<hr>
+</section>
+<section id="two-fundamental-post-processing-pathways-ppk-vs.-ppp" class="level2" data-number="1.2">
+<h2 data-number="1.2" class="anchored" data-anchor-id="two-fundamental-post-processing-pathways-ppk-vs.-ppp"><span class="header-section-number">1.2</span> Two Fundamental Post-Processing Pathways: PPK vs.&nbsp;PPP</h2>
+<p>As illustrated above, there are two distinct post-processing strategies:</p>
+<section id="post-processed-kinematic-ppk-relative-positioning" class="level3" data-number="1.2.1">
+<h3 data-number="1.2.1" class="anchored" data-anchor-id="post-processed-kinematic-ppk-relative-positioning"><span class="header-section-number">1.2.1</span> Post-Processed Kinematic (PPK) / Relative Positioning</h3>
+<p>In PPK, two GNSS receivers record satellite signals simultaneously: * A stationary <strong>Base Station</strong> placed over a known, permanent geodetic monument or a local benchmark. * A moving or temporary <strong>Rover</strong> collecting points or tracks across your study area.</p>
+<p>Because both receivers are tracking the same satellites through approximately the same column of atmosphere (assuming baseline distances under 30–50 km), differencing the carrier phase observations (Double-Differencing) cancels out satellite clock errors, satellite orbit errors, and the vast majority of atmospheric delays.</p>
+<ul>
+<li><strong>Primary Strength:</strong> Extremely high <em>relative</em> accuracy to the base position (1–2 cm horizontal) with relatively short observation times (seconds to minutes for a point).</li>
+<li><strong>Limitation:</strong> Accuracy degrades as the distance (baseline) between the base station and rover increases. If the nearest base station is 150 km away, ionospheric differences between base and rover can prevent the integer carrier-phase ambiguities from resolving to a “Fixed” solution.</li>
+</ul>
+</section>
+<section id="precise-point-positioning-ppp-absolute-positioning" class="level3" data-number="1.2.2">
+<h3 data-number="1.2.2" class="anchored" data-anchor-id="precise-point-positioning-ppp-absolute-positioning"><span class="header-section-number">1.2.2</span> Precise Point Positioning (PPP) / Absolute Positioning</h3>
+<p>PPP does not require a local base station. Instead, a single receiver operates autonomously over an extended period (typically at least 1 to 4 hours of static recording, often longer). The raw RINEX file is sent to an automated geodetic processing engine (such as the <strong>IBGE PPP</strong> service in Brazil, powered by Natural Resources Canada’s CSRS-PPP - another service option).</p>
+<p>The PPP engine applies: * <strong>Precise Satellite Orbits and Clocks:</strong> Post-computed satellite trajectories and clock corrections determined globally by the International GNSS Service (IGS). * <strong>Atmospheric Modeling:</strong> Sophisticated global ionospheric maps and tropospheric zenith path delay estimations. * <strong>Geodynamic Corrections:</strong> Solid Earth tides, ocean tide loading, and polar motion.</p>
+<ul>
+<li><strong>Primary Strength:</strong> Operates anywhere on Earth regardless of proximity to base stations—ideal for remote wilderness areas.</li>
+<li><strong>Limitation:</strong> Requires long occupation times (minimum 1–2 hours for decimeter accuracy; 4–12 hours for 1–2 cm accuracy) while the filter converges. For maximum accuracy requires post-processing data from the service provider that is only generated 1-2 weeks after your survey date.</li>
+</ul>
+<hr>
+</section>
+</section>
+<section id="the-brazilian-geodetic-reference-frame-sirgas2000" class="level2" data-number="1.3">
+<h2 data-number="1.3" class="anchored" data-anchor-id="the-brazilian-geodetic-reference-frame-sirgas2000"><span class="header-section-number">1.3</span> The Brazilian Geodetic Reference Frame: SIRGAS2000</h2>
+<p>All legal spatial data, environmental licenses, land tenure records, and geodetic coordinates in Brazil must conform to the <strong>Sistema de Referência Geocêntrico para as Américas (SIRGAS2000)</strong>, officially adopted by IBGE in Presidential Decree No.&nbsp;5.334/2005.</p>
+<section id="geodetic-parameters-of-sirgas2000" class="level3" data-number="1.3.1">
+<h3 data-number="1.3.1" class="anchored" data-anchor-id="geodetic-parameters-of-sirgas2000"><span class="header-section-number">1.3.1</span> Geodetic Parameters of SIRGAS2000</h3>
+<ul>
+<li><strong>Reference Ellipsoid:</strong> GRS80 (Geodetic Reference System 1980).
+<ul>
+<li>Semi-major axis (<span class="math inline">\(a\)</span>): <span class="math inline">\(6,378,137.0\text{ m}\)</span></li>
+<li>Flattening (<span class="math inline">\(1/f\)</span>): <span class="math inline">\(298.257222101\)</span></li>
+</ul></li>
+<li><strong>Coordinate Type:</strong> Geocentric Cartesian <span class="math inline">\((X, Y, Z)\)</span> or Geodetic Geographic <span class="math inline">\((\phi \text{ [Latitude]}, \lambda \text{ [Longitude]}, h \text{ [Ellipsoidal Height]})\)</span>.</li>
+</ul>
+<div class="callout callout-style-default callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>SIRGAS2000 vs.&nbsp;WGS84: Are They the Same?
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>For low-accuracy mapping (handheld GPS or consumer smartphones with 3–5 m error), SIRGAS2000 and WGS84 are practically interchangeable because the GRS80 ellipsoid differs from the WGS84 ellipsoid by less than <span class="math inline">\(0.1\text{ mm}\)</span> in semi-minor axis.</p>
+<p>However, for <strong>centimeter-level geodetic science</strong>, they are <strong>not identical</strong>: 1. WGS84 coordinates broadcast by GPS satellites are tied to dynamic realizations of the International Terrestrial Reference Frame (ITRF) at the <strong>current epoch of observation</strong>. 2. SIRGAS2000 is a plate-fixed reference frame whose official Brazilian coordinates are referenced to the <strong>canonical epoch 2000.4 (2000-05-26)</strong>. 3. Due to South American tectonic plate motion (drifting approximately <span class="math inline">\(1.5\text{ to }2.5\text{ cm/year}\)</span> northeastward), a coordinate measured today in ITRF/WGS84 will differ from its official SIRGAS2000 (epoch 2000.4) coordinates by <strong>30 to 50 centimeters</strong>!</p>
+<p>When you submit data to IBGE PPP, the service automatically computes coordinates in both: * <strong>SIRGAS2000 at the Epoch of Measurement</strong> (reflecting where the physical monument was located on the day of survey). * <strong>SIRGAS2000 at Epoch 2000.4</strong> (projected back using the official velocity model VEMOS, required for legal registration and comparison with official IBGE cartography).</p>
+</div>
+</div>
+<hr>
+</section>
+</section>
+<section id="vertical-datums-ellipsoidal-h-vs.-orthometric-h-heights" class="level2" data-number="1.4">
+<h2 data-number="1.4" class="anchored" data-anchor-id="vertical-datums-ellipsoidal-h-vs.-orthometric-h-heights"><span class="header-section-number">1.4</span> Vertical Datums: Ellipsoidal (<span class="math inline">\(h\)</span>) vs.&nbsp;Orthometric (<span class="math inline">\(H\)</span>) Heights</h2>
+<p>One of the most frequent errors encountered in graduate theses and research papers is confounding <strong>ellipsoidal height</strong> with <strong>orthometric height</strong>. This distinction is especially critical in hydrologic, coastal, and wetland studies where water flows according to gravity, not mathematical ellipsoids.</p>
+<div class="cell" data-layout-align="default">
+<div class="cell-output-display">
+<div>
+<p></p><figure class="figure"><p></p>
+<div>
+<pre class="mermaid mermaid-js">flowchart LR
+    subgraph Terrain
+        T[Topographic Surface / Ground Mark]
+    end
+
+    subgraph Reference Surfaces
+        E[GRS80 Ellipsoid: Mathematical reference surface]
+        G[Geoid: Equipotential gravity surface / Mean Sea Level]
+    end
+
+    T -. "Ellipsoidal Height (h)" .-&gt; E
+    T -. "Orthometric Height (H)" .-&gt; G
+    G -. "Geoid Undulation (N)" .-&gt; E
+</pre>
+</div>
+<p></p></figure><p></p>
+</div>
+</div>
+</div>
+<section id="mathematical-definitions" class="level3" data-number="1.4.1">
+<h3 data-number="1.4.1" class="anchored" data-anchor-id="mathematical-definitions"><span class="header-section-number">1.4.1</span> Mathematical Definitions</h3>
+<ol type="1">
+<li><strong>Ellipsoidal Height (<span class="math inline">\(h\)</span>):</strong> The geometric distance measured along the normal vector perpendicular to the reference ellipsoid (e.g.&nbsp;GRS80) up to the point of interest. GNSS receivers natively calculate <span class="math inline">\(h\)</span>.</li>
+<li><strong>Orthometric Height (<span class="math inline">\(H\)</span>):</strong> The physical distance measured along the plumb line (gravity line) from the <strong>geoid</strong> (equipotential gravity surface approximating global mean sea level) to the point of interest. This is what surveyors call “elevation above sea level” (<span class="math inline">\(H\)</span>).</li>
+<li><strong>Geoid Undulation / Separation (<span class="math inline">\(N\)</span>):</strong> The vertical distance between the reference ellipsoid and the geoid at a given horizontal coordinate:</li>
+</ol>
+<p><span class="math display">\[\Large h = H + N \quad \Longleftrightarrow \quad H = h - N\]</span></p>
+<p>In Brazil: * The vertical datum origin for mainland Brazil is the <strong>Imbituba Tide Gauge</strong> (Santa Catarina). * For the state of Amapá, the historical origin is the <strong>Santana Tide Gauge</strong>. * To convert GNSS-derived ellipsoidal height (<span class="math inline">\(h\)</span>) to official orthometric height (<span class="math inline">\(H\)</span>), IBGE maintains the official national geoidal model: <strong>hgeoHNOR2020</strong> (and the former <strong>MAPGEO2015</strong>).</p>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Rule of Thumb for Elevation in Field Work
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Never report raw heights straight from Emlid Studio without checking the datum setting. Emlid Studio outputs ellipsoidal height (<span class="math inline">\(h\)</span>) by default. When using IBGE PPP, the service automatically reports both <span class="math inline">\(h\)</span> (ellipsoidal) and <span class="math inline">\(H\)</span> (orthometric via MAPGEO2015).</p>
+</div>
+</div>
+<hr>
+</section>
+</section>
+<section id="antenna-geometry-arp-apc-and-phase-center-offsets" class="level2" data-number="1.5">
+<h2 data-number="1.5" class="anchored" data-anchor-id="antenna-geometry-arp-apc-and-phase-center-offsets"><span class="header-section-number">1.5</span> Antenna Geometry: ARP, APC, and Phase Center Offsets</h2>
+<p>A GNSS receiver does not measure coordinates at the physical tip of its antenna pole or the base of its brass mount. The measurement is recorded at an intangible internal point called the <strong>Antenna Phase Center (APC)</strong>.</p>
+<p>Understanding antenna height offsets is vital to ensuring that your calculated coordinates represent the actual ground monument.</p>
+<div class="cell" data-layout-align="default">
+<div class="cell-output-display">
+<div>
+<p></p><figure class="figure"><p></p>
+<div>
+<pre class="mermaid mermaid-js">classDiagram
+    class ReceiverGeometry {
+        +Antenna Phase Center [APC]
+        +Antenna Reference Point [ARP]
+        +Ground Mark / Monument
+    }
+</pre>
+</div>
+<p></p></figure><p></p>
+</div>
+</div>
+</div>
+<pre><code>       [   Emlid Reach RS2   ]  &lt;-- Top of receiver
+             *  APC  *          &lt;-- Antenna Phase Center (electrical signal reception point)
+             |
+             | Antenna Phase Center Offset (PCO) = 134 mm (0.134 m)
+             |
+       [==== ARP ====]          &lt;-- Antenna Reference Point (bottom 5/8" threaded socket)
+             |
+             |
+             | Pole Height (e.g., 2.000 m survey pole or tripod measurement)
+             |
+             |
+             V
+       =============            &lt;-- Ground Mark / Benchmark</code></pre>
+<section id="key-reference-definitions" class="level3" data-number="1.5.1">
+<h3 data-number="1.5.1" class="anchored" data-anchor-id="key-reference-definitions"><span class="header-section-number">1.5.1</span> Key Reference Definitions</h3>
+<ol type="1">
+<li><strong>Ground Mark (Monument):</strong> The physical marker on the Earth’s surface (brass pin, concrete pillar, iron rod, or stake) whose coordinates you wish to determine.</li>
+<li><strong>Antenna Reference Point (ARP):</strong> A clearly identifiable physical point on the exterior receiver casing to which physical measurements are taken. For the Emlid Reach RS2, the ARP is the <strong>bottom of the 5/8” threaded mount</strong>.</li>
+<li><strong>Antenna Phase Center (APC):</strong> The theoretical point in space where the radio signal phase is measured. The APC varies slightly depending on satellite elevation, azimuth, and frequency (L1 vs.&nbsp;L2), known as Phase Center Variation (PCV).</li>
+<li><strong>Phase Center Offset (PCO):</strong> The fixed physical distance between the ARP and the average APC.</li>
+</ol>
+</section>
+<section id="emlid-reach-rs2-antenna-offsets" class="level3" data-number="1.5.2">
+<h3 data-number="1.5.2" class="anchored" data-anchor-id="emlid-reach-rs2-antenna-offsets"><span class="header-section-number">1.5.2</span> Emlid Reach RS2 Antenna Offsets</h3>
+<p>For the Emlid Reach RS2 / RS2+: * <strong>L1 / L2 Phase Center Height Offset (<span class="math inline">\(z\)</span>):</strong> <strong><span class="math inline">\(+0.134\text{ m}\)</span> (<span class="math inline">\(134\text{ mm}\)</span>)</strong> vertically above the ARP. * <strong>Horizontal Offsets (<span class="math inline">\(x, y\)</span>):</strong> <span class="math inline">\(0.000\text{ m}\)</span> (centered over the mount).</p>
+<div class="callout callout-style-default callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>Software Responsibility for Antenna Offsets
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<ul>
+<li><strong>In Emlid Studio:</strong> When you select “Reach RS2” as the antenna model in Emlid Studio and enter a pole height of <code>2.00 m</code>, the software automatically knows to measure from the ground mark to the ARP, adding the internal <span class="math inline">\(0.134\text{ m}\)</span> PCO in the background.</li>
+<li><strong>In RTKlib / IBGE PPP:</strong> When preparing RINEX files for IBGE PPP, you must understand whether the antenna field in the RINEX header records height to the <strong>ARP</strong> or the <strong>APC</strong>. The IBGE PPP service requires the height entered in its submission form to be the height to the <strong>Antenna Reference Point (ARP)</strong>, and it applies its own internal NGS antenna calibration table for the selected antenna model.</li>
+</ul>
+</div>
+</div>
+<hr>
+</section>
+</section>
+</section>
+<section id="sec-ibge-rbmc" class="level1" data-number="2">
+<h1 data-number="2"><span class="header-section-number">2</span> Downloading and Preparing IBGE RBMC Reference Station Data</h1>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Purpose of this Chapter
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>To post-process field data collected with your Emlid Reach RS2 in PPK mode, you require simultaneous GNSS observations recorded by a stationary, highly accurate reference station. In Brazil, this reference data is provided free of charge by the <strong>Rede Brasileira de Monitoramento Contínuo dos Sistemas GNSS (RBMC)</strong>, operated by IBGE.</p>
+<p>This chapter explains how to find the right station, retrieve the correct 24-hour observation and navigation files, interpret the official station description report, and decompress the specialized Hatanaka-compressed files so that Emlid Studio can read them.</p>
+</div>
+</div>
+<section id="overview-of-the-ibge-rbmc-network" class="level2" data-number="2.1">
+<h2 data-number="2.1" class="anchored" data-anchor-id="overview-of-the-ibge-rbmc-network"><span class="header-section-number">2.1</span> Overview of the IBGE RBMC Network</h2>
+<p>The <strong>RBMC</strong> is the backbone of the Brazilian Geodetic System (SGB). It consists of more than 140 permanently operating, geodetic-grade GNSS tracking stations distributed across all Brazilian states and ecological biomes.</p>
+<div class="cell" data-layout-align="default">
+<div class="cell-output-display">
+<div>
+<p></p><figure class="figure"><p></p>
+<div>
+<pre class="mermaid mermaid-js">flowchart TD
+    A["&lt;b&gt;1. IBGE Continuous Tracking Station&lt;/b&gt;&lt;br/&gt;Choke-ring antenna + geodetic receiver"] --&gt;|"Tracks multi-GNSS 24/7"| B["&lt;b&gt;2. Raw Continuous Observations&lt;/b&gt;&lt;br/&gt;GPS, GLONASS, Galileo, BeiDou"]
+    B --&gt;|"Daily midnight UTC chunking"| C["&lt;b&gt;3. Daily RINEX Observation Files&lt;/b&gt;&lt;br/&gt;Standard 30-second sampling interval"]
+    C --&gt;|"Hatanaka (.crx/.26d) &amp; UNIX (.Z) compression"| D["&lt;b&gt;4. IBGE GeoFTP Distribution Server&lt;/b&gt;&lt;br/&gt;geoftp.ibge.gov.br"]
+    D --&gt;|"Download by field researcher"| E["&lt;b&gt;5. Local Working Directory&lt;/b&gt;&lt;br/&gt;Decompressed with CRX2RNX.exe (to .26o)"]
+
+    style A fill:#e1f5fe,stroke:#0288d1,stroke-width:2px
+    style B fill:#e8f5e9,stroke:#388e3c,stroke-width:2px
+    style C fill:#fff8e1,stroke:#ffa000,stroke-width:2px
+    style D fill:#fff3e0,stroke:#f57c00,stroke-width:2px
+    style E fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+</pre>
+</div>
+<p></p></figure><p></p>
+</div>
+</div>
+</div>
+<p>Each RBMC station tracks multi-frequency satellite signals 24 hours a day, 365 days a year. Every day at 00:00:00 UTC, the daily dataset is packaged, compressed using the Hatanaka algorithm, and published to IBGE’s public geodetic repository.</p>
+<hr>
+</section>
+<section id="finding-the-nearest-rbmc-station" class="level2" data-number="2.2">
+<h2 data-number="2.2" class="anchored" data-anchor-id="finding-the-nearest-rbmc-station"><span class="header-section-number">2.2</span> Finding the Nearest RBMC Station</h2>
+<p>The baseline distance between your field survey site and the RBMC station determines your processing success:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Baseline Distance</th>
+<th>Feasibility for Reach RS2 PPK</th>
+<th>Typical Ambiguity Resolution</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>0 – 30 km</strong></td>
+<td><strong>Optimal</strong></td>
+<td>Fast Fix (within minutes), centimeter-level accuracy</td>
+</tr>
+<tr class="even">
+<td><strong>30 – 60 km</strong></td>
+<td><strong>Good</strong></td>
+<td>Fix achievable with 30–60+ minutes of continuous tracking</td>
+</tr>
+<tr class="odd">
+<td><strong>60 – 100 km</strong></td>
+<td><strong>Challenging</strong></td>
+<td>Requires long static occupations (1–3 hours); partial Float</td>
+</tr>
+<tr class="even">
+<td><strong>&gt; 100 km</strong></td>
+<td><strong>Not recommended for PPK</strong></td>
+<td>Ionospheric divergence prevents Fix; <strong>use IBGE PPP instead</strong></td>
+</tr>
+</tbody>
+</table>
+<section id="step-1-identifying-stations-via-the-ibge-interactive-map" class="level3" data-number="2.2.1">
+<h3 data-number="2.2.1" class="anchored" data-anchor-id="step-1-identifying-stations-via-the-ibge-interactive-map"><span class="header-section-number">2.2.1</span> Step 1: Identifying Stations via the IBGE Interactive Map</h3>
+<ol type="1">
+<li>Navigate to the <a href="https://www.ibge.gov.br/geociencias/informacoes-sobre-posicionamento-geodesico/rede-geodesica/16258-rede-brasileira-de-monitoramento-continuo-dos-sistemas-gnss-rbmc.html?=&amp;t=dados-diarios-e-situacao-operacional">“daily data and operational situation”</a> page.<br>
+</li>
+<li>Find the nearest station to your field site by zooming and panning the map.</li>
+<li>Check if the station is <strong>active</strong> (green dot) or <strong>inactive</strong> (red dot). Only active stations can be used for PPK processing.</li>
+<li>Identify the 4-character identifier of the nearest active station (e.g., <code>AMTE</code>). The two first letters are the state code, and the last two letters come from the city name - AMTE is the station for Tefé, Amazonas.</li>
+</ol>
+<hr>
+</section>
+</section>
+<section id="downloading-daily-rinex-files-from-ibge-geoftp" class="level2" data-number="2.3">
+<h2 data-number="2.3" class="anchored" data-anchor-id="downloading-daily-rinex-files-from-ibge-geoftp"><span class="header-section-number">2.3</span> Downloading Daily RINEX Files from IBGE GeoFTP</h2>
+<p>IBGE hosts all historical and current RBMC observation data on their public <strong>GeoFTP</strong> server:</p>
+<blockquote class="blockquote">
+<p><strong>Root GeoFTP URL:</strong><br>
+<a href="https://geoftp.ibge.gov.br/informacoes_sobre_posicionamento_geodesico/rbmc/dados">https://geoftp.ibge.gov.br/informacoes_sobre_posicionamento_geodesico/rbmc/dados/</a></p>
+</blockquote>
+<section id="understanding-the-geoftp-folder-hierarchy" class="level3" data-number="2.3.1">
+<h3 data-number="2.3.1" class="anchored" data-anchor-id="understanding-the-geoftp-folder-hierarchy"><span class="header-section-number">2.3.1</span> Understanding the GeoFTP Folder Hierarchy</h3>
+<p>Data on the GeoFTP server is organized by <strong>Calendar Year</strong> and <strong>Day of Year (DOY)</strong>:</p>
+<pre><code>https://geoftp.ibge.gov.br/.../rbmc/dados/
+└── [YYYY]/                  &lt;-- 4-digit Year (e.g., 2026)
+    └── [DOY]/               &lt;-- 3-digit Day of Year (001 to 366, e.g., 075)
+        ├── [ssss][doy]0.[yy]d.Z   &lt;-- Hatanaka-compressed Observation file (RINEX 2)
+        ├── [ssss][doy]0.[yy]n.Z   &lt;-- GPS Broadcast Navigation file
+        ├── [ssss][doy]0.[yy]g.Z   &lt;-- GLONASS Broadcast Navigation file
+        └── [ssss][doy]0.[yy]m.Z   &lt;-- Meteorological data (if available)</code></pre>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Converting Calendar Dates to Day of Year (DOY)
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>GNSS reference files use the 3-digit Julian Day of Year (DOY). For example: - January 1st = <code>001</code> - February 1st = <code>032</code> - March 16th (non-leap year) = <code>075</code></p>
+<p>You can look up the DOY using the official <a href="https://www.esrl.noaa.gov/gmd/grad/neubrew/Calendar.html">NOAA Day of Year Calendar</a> or run a simple PowerShell one-liner:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode powershell code-with-copy"><code class="sourceCode powershell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Get Day of Year for a specific date in PowerShell 7</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="op">(</span><span class="fu">Get-Date</span> <span class="st">"2026-03-16"</span><span class="op">).</span><span class="fu">DayOfYear</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Outputs: 75 -&gt; Format as 3 digits: '075'</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</div>
+</section>
+<section id="file-naming-conventions-decoded" class="level3" data-number="2.3.2">
+<h3 data-number="2.3.2" class="anchored" data-anchor-id="file-naming-conventions-decoded"><span class="header-section-number">2.3.2</span> File Naming Conventions Decoded</h3>
+<p>Suppose our reference station code is <code>BASE</code>, the survey took place on Day of Year <code>075</code>, in the year <code>2026</code> (<code>26</code>):</p>
+<ol type="1">
+<li><strong><code>base0750.26d.Z</code> (The Observation File):</strong>
+<ul>
+<li><code>base</code>: 4-character station code (lowercase).</li>
+<li><code>075</code>: Day of Year.</li>
+<li><code>0</code>: Sequence number (<code>0</code> = full 24-hour daily file).</li>
+<li><code>.26</code>: Two-digit year (2026).</li>
+<li><code>d</code>: <strong>Hatanaka-compressed observation file</strong> (standard uncompressed files end in <code>o</code>).</li>
+<li><code>.Z</code>: UNIX Compress compression wrapper (or <code>.gz</code>).</li>
+</ul></li>
+<li><strong><code>base0750.26n.Z</code> (GPS Navigation File):</strong>
+<ul>
+<li>Contains broadcast ephemerides for GPS satellites.</li>
+</ul></li>
+<li><strong><code>base0750.26g.Z</code> (GLONASS Navigation File):</strong>
+<ul>
+<li>Contains broadcast ephemerides for GLONASS satellites.</li>
+</ul></li>
+</ol>
+<div class="callout callout-style-default callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>What You Need to Download
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>For PPK in Emlid Studio, you must download at least: 1. The <strong>Observation file</strong> (<code>[ssss][doy]0.[yy]d.Z</code>). 2. The <strong>Navigation file</strong> (<code>[ssss][doy]0.[yy]n.Z</code> and/or <code>[ssss][doy]0.[yy]g.Z</code>), or use the broadcast navigation file recorded by your own Reach RS2 receiver.</p>
+</div>
+</div>
+<hr>
+</section>
+</section>
+<section id="retrieving-the-station-report-relatório-da-estação" class="level2" data-number="2.4">
+<h2 data-number="2.4" class="anchored" data-anchor-id="retrieving-the-station-report-relatório-da-estação"><span class="header-section-number">2.4</span> Retrieving the Station Report (<em>Relatório da Estação</em>)</h2>
+<p>Never rely solely on the coordinates written in the RINEX header of a reference station file. RINEX headers often contain approximate autonomous positions recorded when the receiver was first initialized.</p>
+<p>To achieve millimeter and centimeter geodetic accuracy, you must retrieve the official IBGE station report:</p>
+<ol type="1">
+<li>Navigate to:<br>
+<code>https://geoftp.ibge.gov.br/informacoes_sobre_posicionamento_geodesico/rbmc/relatorio/</code></li>
+<li>Download the station PDF named <code>[ssss].pdf</code> (e.g., <code>BASE.pdf</code>).</li>
+<li>Locate the following critical parameters inside the report:</li>
+</ol>
+<pre><code>========================================================================
+EXEMPLAR EXTRACT: IBGE RBMC STATION DESCRIPTION REPORT
+========================================================================
+ESTAÇÃO: BASE - ESTAÇÃO EXEMPLAR
+MUNICÍPIO / UF: CIDADE / UF
+
+SISTEMA DE REFERÊNCIA GEOCÊNTRICO: SIRGAS2000 (Época: 2000.4)
+COORDENADAS GEODÉSICAS:
+  Latitude:   -03° 06' 18.24582" S  (ou graus decimais)
+  Longitude:  -60° 01' 22.98104" W
+  Altitude Elipsoidal (h):  78.452 m
+  Altitude Ortométrica (H): 54.120 m (Modelo MAPGEO2015)
+
+COORDENADAS CARTESIANAS (SIRGAS2000 2000.4):
+  X = 3165421.124 m
+  Y = -5523190.875 m
+  Z = -342891.432 m
+
+INFORMAÇÕES DA ANTENA:
+  Modelo da Antena:  TRM59800.00     NONE
+  Altura da Antena:  0.000 m (Medida vertical até o ARP)
+========================================================================</code></pre>
+<p>Keep this PDF open; you will enter these exact coordinates into Emlid Studio during the PPK configuration step.</p>
+<hr>
+</section>
+<section id="decompressing-hatanaka-compact-rinex-crx2rnx" class="level2" data-number="2.5">
+<h2 data-number="2.5" class="anchored" data-anchor-id="decompressing-hatanaka-compact-rinex-crx2rnx"><span class="header-section-number">2.5</span> Decompressing Hatanaka Compact RINEX (<code>CRX2RNX</code>)</h2>
+<p>The most common reason a RINEX file fails to open in Emlid Studio or RTKlib is that the file remains <strong>Hatanaka-compressed</strong>.</p>
+<section id="what-is-hatanaka-compression" class="level3" data-number="2.5.1">
+<h3 data-number="2.5.1" class="anchored" data-anchor-id="what-is-hatanaka-compression"><span class="header-section-number">2.5.1</span> What is Hatanaka Compression?</h3>
+<p>Developed by Dr.&nbsp;Yuki Hatanaka at the Geospatial Information Authority of Japan (GSI), the Compact RINEX format replaces raw phase and pseudorange measurements with second-order differences between consecutive epochs.</p>
+<ul>
+<li>Uncompressed RINEX observation file extension: <code>.yyO</code> or <code>.rnx</code> (ASCII text).</li>
+<li>Hatanaka compressed file extension: <code>.yyD</code> or <code>.crx</code> (also ASCII text, but mathematically encoded).</li>
+</ul>
+<p>GNSS engines like Emlid Studio cannot parse a <code>.yyD</code> or <code>.crx</code> file directly; they require standard <code>.yyO</code> or <code>.rnx</code> observation files.</p>
+<pre><code>[base0750.26d.Z] 
+      |
+      | 1. Decompress .Z with 7-Zip or PowerShell
+      V
+[base0750.26d]   &lt;-- Hatanaka Compact RINEX (not yet readable by Emlid Studio!)
+      |
+      | 2. Execute CRX2RNX.exe
+      V
+[base0750.26o]   &lt;-- Standard Uncompressed RINEX Observation File (Ready for Emlid Studio)</code></pre>
+<hr>
+</section>
+<section id="step-by-step-decompression-on-windows" class="level3" data-number="2.5.2">
+<h3 data-number="2.5.2" class="anchored" data-anchor-id="step-by-step-decompression-on-windows"><span class="header-section-number">2.5.2</span> Step-by-Step Decompression on Windows</h3>
+<section id="step-1-unpack-the-.z-or-.gz-archive" class="level4" data-number="2.5.2.1">
+<h4 data-number="2.5.2.1" class="anchored" data-anchor-id="step-1-unpack-the-.z-or-.gz-archive"><span class="header-section-number">2.5.2.1</span> Step 1: Unpack the <code>.Z</code> or <code>.gz</code> Archive</h4>
+<p>Right-click the downloaded <code>base0750.26d.Z</code> file and extract it using <a href="https://7-zip.org/">7-Zip</a> or <a href="https://www.win-rar.com/">WinRAR</a>. This leaves you with the uncompressed archive content: <code>base0750.26d</code>.</p>
+</section>
+<section id="step-2-download-the-official-crx2rnx.exe-tool" class="level4" data-number="2.5.2.2">
+<h4 data-number="2.5.2.2" class="anchored" data-anchor-id="step-2-download-the-official-crx2rnx.exe-tool"><span class="header-section-number">2.5.2.2</span> Step 2: Download the Official <code>CRX2RNX.exe</code> Tool</h4>
+<ol type="1">
+<li>Download the official, pre-compiled Windows executable <code>CRX2RNX.exe</code> from the IGS / GSI repository:<br>
+<a href="https://terras.gsi.go.jp/ja/crx2rnx.html">https://terras.gsi.go.jp/ja/crx2rnx.html</a> or the official <a href="https://gage.earthscope.org/data/gnss/hatanaka.html">IGS RNXCMP tools repository</a>.</li>
+<li>Place <code>CRX2RNX.exe</code> in your working directory (e.g., <code>C:\GNSS_Project\CRX2RNX.exe</code>).</li>
+</ol>
+</section>
+<section id="step-3-run-decompression-in-powershell-7" class="level4" data-number="2.5.2.3">
+<h4 data-number="2.5.2.3" class="anchored" data-anchor-id="step-3-run-decompression-in-powershell-7"><span class="header-section-number">2.5.2.3</span> Step 3: Run Decompression in PowerShell 7</h4>
+<p>Open PowerShell 7 in your data directory and run:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode powershell code-with-copy"><code class="sourceCode powershell"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Decompress single Hatanaka file to standard RINEX observation</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="op">.</span>\CRX2RNX<span class="op">.</span><span class="fu">exe</span> <span class="op">.</span>\base0750<span class="op">.</span><span class="dv">26</span><span class="dt">d</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><code>CRX2RNX</code> automatically creates a new file in the same directory: - Input: <code>base0750.26d</code> - Output: <code>base0750.26o</code> (Standard RINEX Version 2.11 observation file)</p>
+</section>
+<section id="step-4-batch-decompression-powershell-script" class="level4" data-number="2.5.2.4">
+<h4 data-number="2.5.2.4" class="anchored" data-anchor-id="step-4-batch-decompression-powershell-script"><span class="header-section-number">2.5.2.4</span> Step 4: Batch Decompression (PowerShell Script)</h4>
+<p>If you have downloaded multiple days or multiple stations, decompressing them manually one by one is tedious. Use this copy-pasteable PowerShell snippet:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode powershell code-with-copy"><code class="sourceCode powershell"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Batch decompress all .??d and .crx files in the current folder</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="fu">Get-ChildItem</span> <span class="op">-</span>Path <span class="op">.</span> <span class="op">-</span>Filter <span class="op">*.*</span> <span class="op">|</span> <span class="fu">Where-Object</span> <span class="op">{</span> <span class="va">$_</span><span class="op">.</span><span class="fu">Name</span> <span class="op">-match</span> <span class="st">"\.\d\d[dD]$|\.crx$"</span> <span class="op">}</span> <span class="op">|</span> <span class="fu">ForEach-Object</span> <span class="op">{</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">Write-Host</span> <span class="st">"Decompressing: </span><span class="op">$(</span><span class="va">$_</span><span class="op">.</span><span class="fu">Name</span><span class="op">)</span><span class="st">..."</span> <span class="op">-</span>ForegroundColor Cyan</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>    <span class="op">&amp;</span> <span class="op">.</span>\CRX2RNX<span class="op">.</span><span class="fu">exe</span> <span class="va">$_</span><span class="op">.</span><span class="fu">FullName</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="fu">Write-Host</span> <span class="st">"All files decompressed successfully!"</span> <span class="op">-</span>ForegroundColor Green</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>You now have a clean, standard <code>.26o</code> observation file ready to load into Emlid Studio.</p>
+<hr>
+</section>
+</section>
+</section>
+</section>
+<section id="sec-emlid-studio-ppk" class="level1" data-number="3">
+<h1 data-number="3"><span class="header-section-number">3</span> Post-Processing Kinematic (PPK) in Emlid Studio</h1>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Purpose of this Chapter
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>This chapter walks step-by-step through configuring and executing a differential Post-Processed Kinematic (PPK) solution in <strong>Emlid Studio</strong> on Windows. You will learn how to pair raw observation logs from an <strong>Emlid Reach RS2</strong> receiver with the decompressed <strong>IBGE RBMC</strong> base station data, set accurate antenna height offsets, enter official geodetic coordinates, and evaluate the quality of your solution track.</p>
+</div>
+</div>
+<section id="introduction-to-emlid-studio" class="level2" data-number="3.1">
+<h2 data-number="3.1" class="anchored" data-anchor-id="introduction-to-emlid-studio"><span class="header-section-number">3.1</span> Introduction to Emlid Studio</h2>
+<p><strong>Emlid Studio</strong> is a free, cross-platform desktop application designed specifically for post-processing GNSS data. Beneath its modern graphical interface runs an optimized implementation of the open-source <strong>RTKLIB</strong> engine, tailored specifically to handle multi-frequency, multi-constellation logs.</p>
+<div class="cell" data-layout-align="default">
+<div class="cell-output-display">
+<div>
+<p></p><figure class="figure"><p></p>
+<div>
+<pre class="mermaid mermaid-js">flowchart TD
+    subgraph Data Inputs
+        R[Rover Log: Emlid Reach RS2&lt;br/&gt;Raw .UBX or .obs]
+        B[Base Log: IBGE RBMC&lt;br/&gt;Decompressed .yyO]
+        N[Broadcast Navigation&lt;br/&gt;.nav / .yyN]
+    end
+
+    subgraph Emlid Studio Engine
+        P[Kinematic / Static Processing&lt;br/&gt;Double-Differenced Carrier Phase Filter]
+        C[Antenna Calibration &amp; Offsets&lt;br/&gt;Reach RS2: 134 mm PCO]
+        S[Base Position Override&lt;br/&gt;Official IBGE SIRGAS2000 Coordinates]
+    end
+
+    subgraph Solution Output
+        SOL[Position Solution .pos&lt;br/&gt;Quality: Fix vs. Float vs. Single]
+    end
+
+    R --&gt; P
+    B --&gt; P
+    N --&gt; P
+    C --&gt; P
+    S --&gt; P
+    P --&gt; SOL
+</pre>
+</div>
+<p></p></figure><p></p>
+</div>
+</div>
+</div>
+<section id="downloading-and-installing-on-windows" class="level3" data-number="3.1.1">
+<h3 data-number="3.1.1" class="anchored" data-anchor-id="downloading-and-installing-on-windows"><span class="header-section-number">3.1.1</span> Downloading and Installing on Windows</h3>
+<ol type="1">
+<li>Download the Windows installer (64-bit, Windows 10/11) from the official Emlid download page:<br>
+<a href="https://emlid.com/emlid-studio/#download">https://emlid.com/emlid-studio/#download</a></li>
+<li>Run the installer <code>.exe</code> and follow the on-screen prompts.</li>
+<li>Launch Emlid Studio from the Start Menu or Desktop shortcut.</li>
+</ol>
+<hr>
+</section>
+</section>
+<section id="kinematic-vs.-static-workflows" class="level2" data-number="3.2">
+<h2 data-number="3.2" class="anchored" data-anchor-id="kinematic-vs.-static-workflows"><span class="header-section-number">3.2</span> Kinematic vs.&nbsp;Static Workflows</h2>
+<p>In the top-left corner of the Emlid Studio window, click the workflow drop-down menu:</p>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="assets/images/emlid_workflow_dropdown.png" class="img-fluid figure-img" style="width:80.0%"></p>
+<figcaption>Emlid Studio Workflow Selection Dropdown</figcaption>
+</figure>
+</div>
+<p>There are two primary workflows depending on how your Reach RS2 was deployed in the field:</p>
+<ol type="1">
+<li><strong>Kinematic Processing:</strong>
+<ul>
+<li><strong>When to use:</strong> The Reach RS2 was moving (e.g., mounted on a backpack, drone, boat, vehicle, or handheld on a survey pole while walking).</li>
+<li><strong>Output:</strong> A continuous temporal trajectory of positions (one position per recording epoch, e.g., 1 Hz or 5 Hz).</li>
+</ul></li>
+<li><strong>Static Processing:</strong>
+<ul>
+<li><strong>When to use:</strong> The Reach RS2 remained completely stationary on a tripod or bipod over a physical ground benchmark (from a few minutes to several hours) to establish a new permanent point.</li>
+<li><strong>Output:</strong> A single, averaged, high-precision geodetic coordinate set with formal standard deviations.</li>
+</ul></li>
+</ol>
+<hr>
+</section>
+<section id="step-by-step-ppk-configuration-kinematic-workflow" class="level2" data-number="3.3">
+<h2 data-number="3.3" class="anchored" data-anchor-id="step-by-step-ppk-configuration-kinematic-workflow"><span class="header-section-number">3.3</span> Step-by-Step PPK Configuration (Kinematic Workflow)</h2>
+<section id="step-1-loading-the-rover-observation-file" class="level3" data-number="3.3.1">
+<h3 data-number="3.3.1" class="anchored" data-anchor-id="step-1-loading-the-rover-observation-file"><span class="header-section-number">3.3.1</span> Step 1: Loading the Rover Observation File</h3>
+<ol type="1">
+<li>In the <strong>Rover</strong> section, drag and drop the raw file from your Reach RS2 receiver.
+<ul>
+<li>Emlid Studio accepts raw u-blox binary logs (<code>.UBX</code>), RTCM3 logs, or standard RINEX observation files (<code>.obs</code>, <code>.26o</code>, <code>.rnx</code>).</li>
+<li><em>Automatic Conversion:</em> If you supply a <code>.UBX</code> file, Emlid Studio converts it to RINEX in the background automatically.</li>
+</ul></li>
+<li>Click the <strong>Edit</strong> button next to the rover antenna parameters:</li>
+</ol>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="assets/images/emlid_rover_settings.png" class="img-fluid figure-img" style="width:80.0%"></p>
+<figcaption>Loading Rover Observation File and Setting Antenna Parameters</figcaption>
+</figure>
+</div>
+<ol start="3" type="1">
+<li>Set the antenna properties:
+<ul>
+<li><strong>Antenna Type:</strong> Select <code>Reach RS2</code> from the dropdown list.</li>
+<li><strong>Antenna Height (m):</strong> Enter the physical height of your survey pole (e.g., <code>2.000</code> m) measured from the ground mark to the <strong>Antenna Reference Point (ARP)</strong>.</li>
+</ul></li>
+</ol>
+<div class="callout callout-style-default callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>Reach RS2 Internal Antenna Height Geometry
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>When you select <code>Reach RS2</code> in the dropdown, Emlid Studio <strong>automatically adds the internal 0.134 m (134 mm) Antenna Phase Center Offset (PCO)</strong> to your entered pole height. - If your physical survey rod is 2.000 m tall, enter <strong><code>2.000</code></strong>. - <strong>Do not</strong> manually add 0.134 m yourself (e.g., entering <code>2.134</code>), or you will double-count the offset and your calculated elevation will be 13.4 cm too low!</p>
+</div>
+</div>
+<hr>
+</section>
+<section id="step-2-loading-the-ibge-rbmc-base-observation-file" class="level3" data-number="3.3.2">
+<h3 data-number="3.3.2" class="anchored" data-anchor-id="step-2-loading-the-ibge-rbmc-base-observation-file"><span class="header-section-number">3.3.2</span> Step 2: Loading the IBGE RBMC Base Observation File</h3>
+<ol type="1">
+<li>In the <strong>Base</strong> section, drag and drop your decompressed IBGE RBMC observation file (e.g., <code>base0750.26o</code>).</li>
+<li>Examine the base station position fields:</li>
+</ol>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="assets/images/emlid_base_settings.png" class="img-fluid figure-img" style="width:80.0%"></p>
+<figcaption>Loading Base Observation File and Entering Known Geodetic Coordinates</figcaption>
+</figure>
+</div>
+<ol start="3" type="1">
+<li><strong>Override the Base Position:</strong> By default, Emlid Studio selects <strong>“RINEX Header Position”</strong>. As noted in <a href="#sec-ibge-rbmc" class="quarto-xref">Section&nbsp;2</a>, this header position is only an approximate autonomous estimate.
+<ul>
+<li>Click the position dropdown and select <strong>Manual coordinates</strong> (or Cartesian coordinates).</li>
+<li>Open the official IBGE <strong>Relatório da Estação</strong> (the station PDF downloaded in <a href="#sec-ibge-rbmc" class="quarto-xref">Section&nbsp;2</a>).</li>
+<li>Enter the exact geodetic coordinates:
+<ul>
+<li><strong>Latitude (<span class="math inline">\(\phi\)</span>):</strong> e.g., <code>-03.10506828</code> (or degrees, minutes, seconds).</li>
+<li><strong>Longitude (<span class="math inline">\(\lambda\)</span>):</strong> e.g., <code>-60.02305029</code>.</li>
+<li><strong>Ellipsoidal Height (<span class="math inline">\(h\)</span>):</strong> e.g., <code>78.452</code> m.</li>
+</ul></li>
+<li><strong>Base Antenna Height:</strong> Enter <code>0.000</code> m (because the official IBGE published coordinates refer directly to the station ARP on the physical monument).</li>
+</ul></li>
+</ol>
+<div class="callout callout-style-default callout-caution callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Caution</span>Never Process Against Uncorrected Header Coordinates
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>If you leave the base position on “RINEX Header Position”, your relative baseline will be precise, but your absolute positions will be shifted in space by 2 to 5 meters! Always copy the official SIRGAS2000 coordinates from the IBGE station report.</p>
+</div>
+</div>
+<hr>
+</section>
+<section id="step-3-loading-the-navigation-file" class="level3" data-number="3.3.3">
+<h3 data-number="3.3.3" class="anchored" data-anchor-id="step-3-loading-the-navigation-file"><span class="header-section-number">3.3.3</span> Step 3: Loading the Navigation File</h3>
+<ol type="1">
+<li>In the <strong>Navigation</strong> section, drag and drop the broadcast navigation file.</li>
+<li>You can use either:
+<ul>
+<li>The broadcast navigation file downloaded from IBGE (<code>base0750.26n</code> / <code>base0750.26p</code>), or</li>
+<li>The navigation file recorded by your Reach RS2 during the survey (<code>.nav</code> or <code>.26p</code>).</li>
+</ul></li>
+<li>If your rover log is in <code>.UBX</code> format, Emlid Studio extracts the navigation file automatically during conversion.</li>
+</ol>
+<hr>
+</section>
+<section id="step-4-fine-tuning-advanced-processing-settings" class="level3" data-number="3.3.4">
+<h3 data-number="3.3.4" class="anchored" data-anchor-id="step-4-fine-tuning-advanced-processing-settings"><span class="header-section-number">3.3.4</span> Step 4: Fine-Tuning Advanced Processing Settings</h3>
+<p>Click the <strong>Gear Icon</strong> (Settings) in the top-right corner to open the RTKLIB configuration dialog:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Parameter</th>
+<th>Recommended Setting</th>
+<th>Scientific Rationale</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Positioning Mode</strong></td>
+<td><code>Kinematic</code> (or <code>Static</code>)</td>
+<td>Matches your physical field motion.</td>
+</tr>
+<tr class="even">
+<td><strong>Elevation Mask</strong></td>
+<td><code>15 deg</code></td>
+<td>Rejects satellites lower than 15° above the horizon, eliminating severe tropospheric delay and ground multipath.</td>
+</tr>
+<tr class="odd">
+<td><strong>SNR Mask</strong></td>
+<td><code>35 dB-Hz</code></td>
+<td>Discards weak satellite signals attenuated by forest canopy, heavy rain, or foliage.</td>
+</tr>
+<tr class="even">
+<td><strong>Satellites / Systems</strong></td>
+<td><code>GPS, GLONASS, Galileo, BeiDou</code></td>
+<td>Utilizes all available constellations tracked by Reach RS2 to maximize geometry (low PDOP).</td>
+</tr>
+<tr class="odd">
+<td><strong>Ambiguity Resolution</strong></td>
+<td><code>Fix and Hold</code> or <code>Continuous</code></td>
+<td><code>Continuous</code> is conservative and robust against cycle slips in dense forest; <code>Fix and Hold</code> is aggressive for open sky.</td>
+</tr>
+<tr class="even">
+<td><strong>Solution Direction</strong></td>
+<td><code>Combined</code></td>
+<td>Runs the Kalman filter forward from start to end, then backward from end to start, smoothing out ambiguities.</td>
+</tr>
+</tbody>
+</table>
+<hr>
+</section>
+<section id="step-5-processing-and-quality-control" class="level3" data-number="3.3.5">
+<h3 data-number="3.3.5" class="anchored" data-anchor-id="step-5-processing-and-quality-control"><span class="header-section-number">3.3.5</span> Step 5: Processing and Quality Control</h3>
+<ol type="1">
+<li>Click the blue <strong>Process</strong> button in the lower-right corner.</li>
+<li>Monitor the progress bar as the forward and backward Kalman filters run:</li>
+</ol>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="assets/images/emlid_processing_progress.png" class="img-fluid figure-img" style="width:80.0%"></p>
+<figcaption>PPK Processing in Progress</figcaption>
+</figure>
+</div>
+<ol start="3" type="1">
+<li>Once processing finishes, Emlid Studio displays the interactive track plot:</li>
+</ol>
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="assets/images/emlid_solution_plot.png" class="img-fluid figure-img" style="width:80.0%"></p>
+<figcaption>Emlid Studio PPK Solution Plot</figcaption>
+</figure>
+</div>
+<hr>
+</section>
+</section>
+<section id="evaluating-the-solution-fix-vs.-float-vs.-single" class="level2" data-number="3.4">
+<h2 data-number="3.4" class="anchored" data-anchor-id="evaluating-the-solution-fix-vs.-float-vs.-single"><span class="header-section-number">3.4</span> Evaluating the Solution: Fix vs.&nbsp;Float vs.&nbsp;Single</h2>
+<p>The interactive map colors each calculated epoch according to its mathematical quality:</p>
+<div class="cell" data-layout-align="default">
+<div class="cell-output-display">
+<div>
+<p></p><figure class="figure"><p></p>
+<div>
+<pre class="mermaid mermaid-js">pie title Epoch Solution Distribution (High Quality Survey Target)
+    "Fix (1-2 cm Accuracy)" : 96
+    "Float (20-80 cm Accuracy)" : 3
+    "Single (2-5 m Accuracy)" : 1
+</pre>
+</div>
+<p></p></figure><p></p>
+</div>
+</div>
+</div>
+<ol type="1">
+<li><strong>Green — Fixed Solution:</strong>
+<ul>
+<li>The carrier-phase integer number of cycles between satellite and receiver has been unambiguously resolved.</li>
+<li><strong>Accuracy:</strong> Horizontal 1–2 cm, Vertical 2–3 cm.</li>
+<li><strong>Usability:</strong> Publishable, survey-grade ground truth.</li>
+</ul></li>
+<li><strong>Yellow — Float Solution:</strong>
+<ul>
+<li>The algorithm could not resolve the carrier-phase ambiguities to exact integers and maintains them as real (floating-point) numbers.</li>
+<li><strong>Accuracy:</strong> Horizontal 20–80 cm, Vertical 0.5–1.5 m.</li>
+<li><strong>Usability:</strong> Suitable for broad reconnaissance or rough GIS boundary mapping, but <strong>unacceptable</strong> for high-precision vertical datums or flood-pulse monitoring.</li>
+</ul></li>
+<li><strong>Red — Single (Autonomous) Solution:</strong>
+<ul>
+<li>No differential corrections were possible for this epoch (insufficient shared satellites between base and rover).</li>
+<li><strong>Accuracy:</strong> 2 to 5 meters.</li>
+</ul></li>
+</ol>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>Quality Metric: Fix Ratio
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>In scientific papers and technical reports, always report your <strong>Fix Percentage</strong> (e.g., “Post-processing in Emlid Studio achieved a 97.4% fixed integer ambiguity resolution across all 14,200 recorded epochs”). If your fix percentage is below 80%, examine your baseline distance, satellite elevation mask, or check whether dense canopy obstructed satellite line-of-sight.</p>
+</div>
+</div>
+<hr>
+</section>
+<section id="inspecting-and-exporting-solution-files" class="level2" data-number="3.5">
+<h2 data-number="3.5" class="anchored" data-anchor-id="inspecting-and-exporting-solution-files"><span class="header-section-number">3.5</span> Inspecting and Exporting Solution Files</h2>
+<p>Click the <strong>Show Result Files</strong> folder icon. Emlid Studio generates:</p>
+<ol type="1">
+<li><strong><code>*_events.pos</code>:</strong> Contains the precise coordinates corresponding to time-marks (e.g., camera shutter triggers or manual point saves in Emlid Flow).</li>
+<li><strong><code>*.pos</code>:</strong> The complete trajectory file containing timestamp (UTC or GPS Time), Latitude, Longitude, Ellipsoidal Height (<span class="math inline">\(h\)</span>), solution quality flag (<code>1 = Fix</code>, <code>2 = Float</code>, <code>5 = Single</code>), number of tracked satellites, and formal standard deviations (<span class="math inline">\(\sigma_N, \sigma_E, \sigma_U\)</span>).</li>
+<li><strong><code>*.csv</code>:</strong> Comma-separated table easily imported into R (<code>sf</code>, <code>terra</code>), Python (<code>pandas</code>, <code>geopandas</code>), or QGIS.</li>
+</ol>
+<hr>
+</section>
+</section>
+<section id="sec-rtklib-prep" class="level1" data-number="4">
+<h1 data-number="4"><span class="header-section-number">4</span> Preparing RINEX Observations with RTKlib: 30-Second Decimation and Formatting</h1>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Purpose of this Chapter
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Before submitting raw GNSS logs from your Emlid Reach RS2 to the <strong>IBGE PPP</strong> (Precise Point Positioning) service, you must ensure the observation file complies with geodetic standards. High-rate field recordings (e.g., 1 Hz or 5 Hz) generate massive files that exceed IBGE upload limits and cause processing timeouts.</p>
+<p>This chapter details how to use <strong>RTKCONV</strong> (the graphical conversion tool in the open-source <strong>RTKLIB</strong> suite) to decimate observations to the required <strong>30-second interval</strong>, standardize RINEX versioning, and configure header metadata.</p>
+</div>
+</div>
+<section id="why-decimate-records-to-30-second-intervals" class="level2" data-number="4.1">
+<h2 data-number="4.1" class="anchored" data-anchor-id="why-decimate-records-to-30-second-intervals"><span class="header-section-number">4.1</span> Why Decimate Records to 30-Second Intervals?</h2>
+<p>When collecting field data with an Emlid Reach RS2, the receiver typically logs at <strong>1 Hz (1 measurement per second)</strong> or <strong>5 Hz (5 measurements per second)</strong>. While high sampling rates are necessary for kinematic drone tracking or dynamic mobile trajectories, they are detrimental to static PPP processing:</p>
+<ol type="1">
+<li><strong>Server Payload Rejection:</strong> A 4-hour static survey logged at 5 Hz contains <span class="math inline">\(72,000\)</span> epochs, producing an uncompressed RINEX file of <span class="math inline">\(150\text{ to }300\text{ MB}\)</span>. IBGE PPP web interfaces frequently reject files exceeding <span class="math inline">\(10\text{ to }20\text{ MB}\)</span> or fail during transmission.</li>
+<li><strong>Computational Redundancy:</strong> Static PPP relies on the geometry change of GNSS satellites orbiting the Earth over several hours. Satellites move relatively slowly across the sky; recording phase measurements every <span class="math inline">\(0.2\text{ seconds}\)</span> versus every <span class="math inline">\(30\text{ seconds}\)</span> does not improve the final position estimate.</li>
+<li><strong>IGS Product Synchronization:</strong> The International GNSS Service (IGS) precise satellite orbit and clock corrections used by IBGE PPP are generated natively at <strong>30-second</strong> intervals.</li>
+</ol>
+<div class="cell" data-layout-align="default">
+<div class="cell-output-display">
+<div>
+<p></p><figure class="figure"><p></p>
+<div>
+<pre class="mermaid mermaid-js">flowchart LR
+    subgraph Raw High-Rate Log
+        A["1 Hz / 5 Hz Field Log&lt;br/&gt;72,000 Epochs (250 MB)"]
+    end
+
+    subgraph RTKCONV Decimation
+        B["RTKlib RTKCONV Filter&lt;br/&gt;Time Interval = 30 s"]
+    end
+
+    subgraph Geodetic Upload File
+        C["30-Second Static RINEX&lt;br/&gt;480 Epochs (1.5 MB)&lt;br/&gt;Zero Loss in Geodetic Accuracy"]
+    end
+
+    A --&gt; B --&gt; C
+</pre>
+</div>
+<p></p></figure><p></p>
+</div>
+</div>
+</div>
+<p>Decimating the file to 30 seconds reduces file size by <strong>97%</strong> with <strong>zero loss in final geodetic accuracy</strong>.</p>
+<hr>
+</section>
+<section id="installing-rtklib-for-windows" class="level2" data-number="4.2">
+<h2 data-number="4.2" class="anchored" data-anchor-id="installing-rtklib-for-windows"><span class="header-section-number">4.2</span> Installing RTKLIB for Windows</h2>
+<p><strong>RTKLIB</strong> is the industry-standard open-source GNSS analysis suite created by Dr.&nbsp;Tomoji Takasu.</p>
+<ol type="1">
+<li>Download the latest official Windows release package of RTKLIB (e.g., RTKLIB v2.4.3 or the optimized demo5 fork by Tim Everett) from GitHub:<br>
+<a href="https://github.com/rtklibexplorer/RTKLIB/releases">https://github.com/rtklibexplorer/RTKLIB/releases</a> or <a href="http://www.rtklib.com/">http://www.rtklib.com/</a></li>
+<li>Extract the downloaded <code>.zip</code> folder to a stable location on your computer (e.g., <code>C:\Tools\RTKLIB\</code>).</li>
+<li>Open the <code>bin\</code> subfolder. You will see several graphical tools:
+<ul>
+<li><code>rtkconv.exe</code>: Format conversion and decimation utility (our primary focus).</li>
+<li><code>rtkpost.exe</code>: Post-processing kinematic/static baseline solver.</li>
+<li><code>rtkplot.exe</code>: Residuals, skyplot, and trajectory visualizer.</li>
+<li><code>convbin.exe</code>: Command-line version of RTKCONV.</li>
+</ul></li>
+</ol>
+<hr>
+</section>
+<section id="step-by-step-walkthrough-rtkconv-gui" class="level2" data-number="4.3">
+<h2 data-number="4.3" class="anchored" data-anchor-id="step-by-step-walkthrough-rtkconv-gui"><span class="header-section-number">4.3</span> Step-by-Step Walkthrough: RTKCONV GUI</h2>
+<p>Double-click <code>rtkconv.exe</code> to launch the conversion window.</p>
+<pre><code>+-------------------------------------------------------------------------+
+| RTKCONV - RINEX Converter                                       [_][X] |
++-------------------------------------------------------------------------+
+| Time Start (GPST) [x] 2026/03/16 12:00:00  End [x] 2026/03/16 16:00:00 |
+| Time Interval     [x] 30 s                 Unit Period      24 h       |
++-------------------------------------------------------------------------+
+| Log File          [ C:\FieldData\ReachRS2_raw_survey.UBX             ] [...] |
+| Format            [ Auto / u-blox                                    ] |
++-------------------------------------------------------------------------+
+| Output Directory  [ C:\FieldData\Processed\                          ] [...] |
+| RINEX OBS         [ rover_30s.26o                                    ] |
+| RINEX NAV         [ rover_30s.26n                                    ] |
++-------------------------------------------------------------------------+
+| [ Options... ]                                     [ Convert ] [ Exit ] |
++-------------------------------------------------------------------------+</code></pre>
+<section id="step-1-selecting-the-input-file-and-format" class="level3" data-number="4.3.1">
+<h3 data-number="4.3.1" class="anchored" data-anchor-id="step-1-selecting-the-input-file-and-format"><span class="header-section-number">4.3.1</span> Step 1: Selecting the Input File and Format</h3>
+<ol type="1">
+<li>In the <strong>Log File</strong> field, click the browse button (<code>...</code>) and select your raw Emlid Reach RS2 log.
+<ul>
+<li>If you downloaded the raw log directly from the Emlid receiver via Wi-Fi or Emlid Flow, it is typically named <code>raw_YYYYMMDDHHMM.UBX</code>.</li>
+<li>If you previously exported a RINEX file from Emlid Studio at 1 Hz, select the <code>.obs</code> or <code>.26o</code> file.</li>
+</ul></li>
+<li>In the <strong>Format</strong> dropdown:
+<ul>
+<li>Select <code>Auto</code> or <code>u-blox</code> if converting a raw <code>.UBX</code> file.</li>
+<li>Select <code>RINEX</code> if decimating an existing high-rate RINEX observation file.</li>
+</ul></li>
+</ol>
+</section>
+<section id="step-2-defining-output-file-paths" class="level3" data-number="4.3.2">
+<h3 data-number="4.3.2" class="anchored" data-anchor-id="step-2-defining-output-file-paths"><span class="header-section-number">4.3.2</span> Step 2: Defining Output File Paths</h3>
+<ol type="1">
+<li>In the <strong>Output Directory</strong> field, choose your clean project destination folder.</li>
+<li>RTKCONV automatically suggests filenames for the generated RINEX Observation (<code>.obs</code> or <code>.yyO</code>) and Navigation (<code>.nav</code> or <code>.yyN</code>) files.</li>
+</ol>
+<hr>
+</section>
+<section id="step-3-configuring-decimation-and-rinex-options" class="level3" data-number="4.3.3">
+<h3 data-number="4.3.3" class="anchored" data-anchor-id="step-3-configuring-decimation-and-rinex-options"><span class="header-section-number">4.3.3</span> Step 3: Configuring Decimation and RINEX Options</h3>
+<p>Click the <strong>Options…</strong> button. This opens the configuration window:</p>
+<pre><code>+-------------------------------------------------------------------------+
+| Options                                                          [_][X] |
++-------------------------------------------------------------------------+
+| RINEX Version   (o) 2.11     ( ) 3.02     ( ) 3.04                     |
+| RINEX File Type [x] Observation   [x] Navigation  [ ] GNAV  [ ] HNAV   |
+| Frequencies     [x] L1+L2    [x] L5                                    |
+| Satellite Syst  [x] GPS      [x] GLONASS  [x] Galileo  [x] BeiDou      |
+| Observation Typ [x] C (Pseudorange)  [x] L (Carrier Phase)  [x] D  [x] S|
++-------------------------------------------------------------------------+
+| Station / Receiver / Antenna Information:                               |
+| Marker Name     [ BASE001         ]  Marker Number [ 0001             ] |
+| Observer / Agency [ RESEARCHER    ]  [ ECOLOGY LAB                    ] |
+| Rec Type/Vers   [ EMLID REACH RS2 ]  [ 3.0                            ] |
+| Ant Type/Vers   [ ADVNULLANTENNA  ]  [ NONE                           ] |
+| Ant Delta (H/E/N) [ 2.0000 ] m       [ 0.0000 ] m       [ 0.0000 ] m   |
++-------------------------------------------------------------------------+
+|                                                     [  OK  ] [ Cancel ] |
++-------------------------------------------------------------------------+</code></pre>
+<p>Configure each setting carefully:</p>
+<ol type="1">
+<li><strong>RINEX Version:</strong>
+<ul>
+<li>Select <strong><code>2.11</code></strong>.</li>
+<li><em>Why:</em> While RINEX 3.04 supports newer constellation signals, IBGE PPP has historical optimizations for RINEX 2.11 dual-frequency files (GPS L1/L2 + GLONASS G1/G2). RINEX 2.11 guarantees seamless parsing without header syntax rejections.</li>
+</ul></li>
+<li><strong>Time Interval (The Decimation Setting):</strong>
+<ul>
+<li>Return to the main window (or options dialog depending on RTKLIB build).</li>
+<li>Check the <strong>Time Interval</strong> box and enter <strong><code>30 s</code></strong> (or <code>30.0</code>).</li>
+<li>This instructs RTKCONV to extract only epochs matching seconds <code>:00</code> and <code>:30</code>, discarding the other 29 epochs per 30-second cycle.</li>
+</ul></li>
+<li><strong>Time Start and End Trimming (Optional but Recommended):</strong>
+<ul>
+<li>Check <strong>Time Start</strong> and <strong>Time End</strong> if you need to crop the file.</li>
+<li><em>Field Tip:</em> Tripods often wobble slightly while being placed and leveled during the first 2–5 minutes of a survey, and are disturbed when dismantling the station at the end. Trimming the first 5 minutes and last 5 minutes eliminates contaminated carrier-phase observations.</li>
+</ul></li>
+<li><strong>Antenna and Marker Metadata:</strong>
+<ul>
+<li><strong>Marker Name:</strong> Enter a 4-to-8 character name identifying your survey benchmark (e.g., <code>BASE01</code>).</li>
+<li><strong>Antenna Type:</strong> Enter <code>ADVNULLANTENNA NONE</code> or <code>EML_REACH_RS2 NONE</code>.</li>
+<li><strong>Antenna Delta (H/E/N):</strong> Enter the measured vertical height of the tripod or pole in meters (e.g., <code>2.0000</code> m) in the <strong>H</strong> box. Leave East and North as <code>0.0000</code>.</li>
+</ul></li>
+<li>Click <strong>OK</strong> to save options.</li>
+</ol>
+<hr>
+</section>
+<section id="step-4-executing-conversion" class="level3" data-number="4.3.4">
+<h3 data-number="4.3.4" class="anchored" data-anchor-id="step-4-executing-conversion"><span class="header-section-number">4.3.4</span> Step 4: Executing Conversion</h3>
+<ol type="1">
+<li>On the main window, click <strong>Convert</strong>.</li>
+<li>The status bar displays processing progress.</li>
+<li>Upon completion, navigate to your output folder. Notice the difference:
+<ul>
+<li>Original <code>.UBX</code> file: <code>48,250 KB</code></li>
+<li>Decimated <code>.26o</code> file: <code>1,240 KB</code></li>
+</ul></li>
+</ol>
+<hr>
+</section>
+</section>
+<section id="verifying-the-decimated-file-header" class="level2" data-number="4.4">
+<h2 data-number="4.4" class="anchored" data-anchor-id="verifying-the-decimated-file-header"><span class="header-section-number">4.4</span> Verifying the Decimated File Header</h2>
+<p>Open the generated <code>.26o</code> or <code>.obs</code> file in Notepad++ or VS Code. Check the ASCII header:</p>
+<pre><code>     2.11           OBSERVATION DATA    G (GPS)             RINEX VERSION / TYPE
+RTKCONV 2.4.3                           20260316 173000 UTC PGM / RUN BY / DATE
+BASE01                                                      MARKER NAME
+RESEARCHER          ECOLOGY LAB                             OBSERVER / AGENCY
+000000              EMLID REACH RS2     3.0                 REC # / TYPE / VERS
+000000              ADVNULLANTENNA      NONE                ANT # / TYPE
+  3165420.0000 -5523190.0000  -342890.0000                  APPROX POSITION XYZ
+        2.0000        0.0000        0.0000                  ANTENNA: DELTA H/E/N
+     1     1                                                WAVELENGTH FACT L1/2
+     4    L1    L2    C1    P2                              # / TYPES OF OBSERV
+   30.000                                                   INTERVAL
+  2026     3    16    12     5    0.0000000     GPS         TIME OF FIRST OBS
+  2026     3    16    15    55    0.0000000     GPS         TIME OF LAST OBS
+                                                            END OF HEADER</code></pre>
+<p>Look specifically for the <strong><code>INTERVAL</code></strong> line: it must read <strong><code>30.000</code></strong>. You now have a compliant RINEX observation file ready for IBGE PPP.</p>
+<hr>
+</section>
+<section id="command-line-alternative-convbin" class="level2" data-number="4.5">
+<h2 data-number="4.5" class="anchored" data-anchor-id="command-line-alternative-convbin"><span class="header-section-number">4.5</span> Command-Line Alternative: <code>convbin</code></h2>
+<p>If you prefer scripting your workflow or need to batch process multiple survey days, use the command-line utility <code>convbin.exe</code> (located in the same <code>bin\</code> folder).</p>
+<p>Open PowerShell 7 and run:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode powershell code-with-copy"><code class="sourceCode powershell"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Convert raw u-blox file to 30-second decimated RINEX 2.11</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="op">.</span>\convbin<span class="op">.</span><span class="fu">exe</span> <span class="op">-</span>r ubx <span class="op">-</span>v <span class="dv">2.11</span> <span class="op">-</span>ti <span class="dv">30</span> <span class="op">-</span>od <span class="op">-</span>os <span class="op">-</span>o rover_30s<span class="op">.</span>26o <span class="op">-</span>n rover_30s<span class="op">.</span><span class="dv">26</span><span class="dt">n</span> <span class="op">.</span>\raw_reach_rs2<span class="op">.</span><span class="fu">ubx</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<section id="explanation-of-command-line-flags" class="level3" data-number="4.5.1">
+<h3 data-number="4.5.1" class="anchored" data-anchor-id="explanation-of-command-line-flags"><span class="header-section-number">4.5.1</span> Explanation of Command-Line Flags</h3>
+<ul>
+<li><code>-r ubx</code>: Specifies the input format as u-blox binary.</li>
+<li><code>-v 2.11</code>: Enforces RINEX Version 2.11.</li>
+<li><code>-ti 30</code>: Sets the decimation time interval to 30 seconds.</li>
+<li><code>-od</code>: Includes Doppler frequency measurements in the observation table.</li>
+<li><code>-os</code>: Includes Signal-to-Noise Ratio (SNR) signal strength measurements.</li>
+<li><code>-o &lt;filename&gt;</code>: Specifies the output observation file path.</li>
+<li><code>-n &lt;filename&gt;</code>: Specifies the output broadcast navigation file path.</li>
+</ul>
+<hr>
+</section>
+</section>
+</section>
+<section id="sec-ibge-ppp" class="level1" data-number="5">
+<h1 data-number="5"><span class="header-section-number">5</span> Submitting to IBGE PPP and Interpreting Geodetic Reports</h1>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Purpose of this Chapter
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>This chapter guides you through submitting your prepared 30-second RINEX observation file to the <strong>IBGE PPP (Posicionamento por Ponto Preciso)</strong> online service and rigorously interpreting the resulting geodetic report. You will learn how to configure the submission parameters, decode the SIRGAS2000 coordinates across measurement and canonical epochs, extract official orthometric elevations derived from MAPGEO2015, and assess whether the solution meets academic publication standards.</p>
+</div>
+</div>
+<section id="what-is-ibge-ppp" class="level2" data-number="5.1">
+<h2 data-number="5.1" class="anchored" data-anchor-id="what-is-ibge-ppp"><span class="header-section-number">5.1</span> What is IBGE PPP?</h2>
+<p><strong>IBGE PPP</strong> is a free, automated geodetic positioning service provided by the Brazilian Institute of Geography and Statistics. The computational engine running behind IBGE PPP is the world-renowned <strong>CSRS-PPP</strong>, developed by the Geodetic Survey Division of <strong>Natural Resources Canada (NRCan)</strong>, adapted specifically to integrate with the <strong>Brazilian Geodetic System (SGB)</strong> and the <strong>SIRGAS2000</strong> spatial reference frame.</p>
+<div class="cell" data-layout-align="default">
+<div class="cell-output-display">
+<div>
+<p></p><figure class="figure"><p></p>
+<div>
+<pre class="mermaid mermaid-js">flowchart TD
+    subgraph User Input
+        A[30s Decimated RINEX File&lt;br/&gt;From Reach RS2 / RTKCONV]
+    end
+
+    subgraph IBGE Processing Server
+        B[IBGE PPP Web Portal&lt;br/&gt;Mode: Estático]
+        C[IGS Precise Ephemeris&lt;br/&gt;Final or Rapid Orbits + Clocks]
+        D[CSRS-PPP Geodetic Engine&lt;br/&gt;Ionosphere Free Linear Combination]
+        E[MAPGEO2015 Geoid Model&lt;br/&gt;Ellipsoidal h to Orthometric H]
+        F[VEMOS Crustal Velocity Model&lt;br/&gt;Epoch of Survey to Epoch 2000.4]
+    end
+
+    subgraph Final Deliverables
+        G[Results ZIP Package]
+        H[Summary PDF Report&lt;br/&gt;SIRGAS2000 Coordinates &amp; Precisions]
+        I[Position File .pos&lt;br/&gt;Kinematic/Epoch Track]
+    end
+
+    A --&gt; B
+    B --&gt; D
+    C --&gt; D
+    D --&gt; E
+    D --&gt; F
+    E --&gt; G
+    F --&gt; G
+    G --&gt; H
+    G --&gt; I
+</pre>
+</div>
+<p></p></figure><p></p>
+</div>
+</div>
+</div>
+<hr>
+</section>
+<section id="timing-your-submission-satellite-ephemeris-tiers" class="level2" data-number="5.2">
+<h2 data-number="5.2" class="anchored" data-anchor-id="timing-your-submission-satellite-ephemeris-tiers"><span class="header-section-number">5.2</span> Timing Your Submission: Satellite Ephemeris Tiers</h2>
+<p>The accuracy of PPP depends directly on the quality of satellite orbit and clock products published by the International GNSS Service (IGS):</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Ephemeris Tier</th>
+<th>Publication Delay</th>
+<th>Typical 3D Accuracy (Static 4h)</th>
+<th>Recommended Use Case</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Ultra-Rapid (<code>IGU</code>)</strong></td>
+<td>Real-time / 3–9 hours</td>
+<td>Decimeter (<span class="math inline">\(10\text{ to }20\text{ cm}\)</span>)</td>
+<td>Quick field sanity check.</td>
+</tr>
+<tr class="even">
+<td><strong>Rapid (<code>IGR</code>)</strong></td>
+<td><strong>17 to 24 hours</strong></td>
+<td>Centimeter (<span class="math inline">\(2\text{ to }5\text{ cm}\)</span>)</td>
+<td>Standard research analysis.</td>
+</tr>
+<tr class="odd">
+<td><strong>Final (<code>IGS</code>)</strong></td>
+<td><strong>12 to 14 days</strong></td>
+<td><strong>Millimeter to Centimeter (<span class="math inline">\(1\text{ to }2\text{ cm}\)</span>)</strong></td>
+<td><strong>Publication-standard benchmarks &amp; permanent monuments.</strong></td>
+</tr>
+</tbody>
+</table>
+<div class="callout callout-style-default callout-tip callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Tip</span>When Should You Submit?
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Do not submit your field logs to IBGE PPP immediately on the day of your survey unless you only need a rough check. <strong>Wait at least 24 hours</strong> so the service can apply IGS <strong>Rapid</strong> orbits, or <strong>wait two weeks</strong> after your field campaign to process against IGS <strong>Final</strong> orbits for publication-grade coordinates.</p>
+</div>
+</div>
+<hr>
+</section>
+<section id="step-by-step-submission-walkthrough" class="level2" data-number="5.3">
+<h2 data-number="5.3" class="anchored" data-anchor-id="step-by-step-submission-walkthrough"><span class="header-section-number">5.3</span> Step-by-Step Submission Walkthrough</h2>
+<section id="step-1-accessing-the-portal" class="level3" data-number="5.3.1">
+<h3 data-number="5.3.1" class="anchored" data-anchor-id="step-1-accessing-the-portal"><span class="header-section-number">5.3.1</span> Step 1: Accessing the Portal</h3>
+<p>Open your browser and navigate to the official IBGE PPP submission page:</p>
+<blockquote class="blockquote">
+<p><strong>IBGE PPP Web Service:</strong><br>
+<a href="https://www.ibge.gov.br/geociencias/informacoes-sobre-posicionamento-geodesico/servicos-online-para-posicionamento/16281-servico-online-para-posicionamento-por-ponto-preciso.html">https://www.ibge.gov.br/geociencias/informacoes-sobre-posicionamento-geodesico/servicos-online-para-posicionamento/16281-servico-online-para-posicionamento-por-ponto-preciso.html</a></p>
+</blockquote>
+<p>Click <strong>Acessar o serviço</strong> (Access Service).</p>
+<hr>
+</section>
+<section id="step-2-filling-in-the-online-form" class="level3" data-number="5.3.2">
+<h3 data-number="5.3.2" class="anchored" data-anchor-id="step-2-filling-in-the-online-form"><span class="header-section-number">5.3.2</span> Step 2: Filling in the Online Form</h3>
+<pre><code>+-------------------------------------------------------------------------+
+| IBGE - SERVIÇO ONLINE DE POSICIONAMENTO POR PONTO PRECISO               |
++-------------------------------------------------------------------------+
+| E-mail do usuário:        [ researcher@university.edu                 ] |
+| Modo de Processamento:    (o) Estático           ( ) Cinemático         |
+| Tipo de Receptor:         [ EMLID REACH RS2                           ] |
+| Modelo da Antena:         [ ADVNULLANTENNA      NONE                  ] |
+| Altura da Antena (m):     [ 2.134                                     ] |
+| Tipo de Medição:          (o) Vertical           ( ) Inclinada          |
+| Arquivo de Observação:    [ Escolher arquivo: rover_30s.26o         ] |
++-------------------------------------------------------------------------+
+| [ Processar ]                                                           |
++-------------------------------------------------------------------------+</code></pre>
+<p>Configure the fields as follows:</p>
+<ol type="1">
+<li><strong>E-mail do usuário (User Email):</strong>
+<ul>
+<li>Enter your active academic email address. IBGE sends the completed processing notification, summary report, and download link to this address.</li>
+</ul></li>
+<li><strong>Modo de Processamento (Processing Mode):</strong>
+<ul>
+<li>Select <strong>Estático (Static)</strong>.</li>
+<li><em>Note:</em> Use “Cinemático” only if your Reach RS2 was continuously moving during data collection.</li>
+</ul></li>
+<li><strong>Tipo de Receptor (Receiver Type):</strong>
+<ul>
+<li>Select or type <code>EMLID REACH RS2</code> (or leave default if auto-detected from the RINEX header).</li>
+</ul></li>
+<li><strong>Modelo da Antena (Antenna Model):</strong>
+<ul>
+<li>Check if <code>EML_REACH_RS2 NONE</code> appears in the antenna selection dropdown.</li>
+<li>If <code>EML_REACH_RS2</code> is present, select it.</li>
+<li>If <code>EML_REACH_RS2</code> is not listed in the IBGE dropdown, select <strong><code>ADVNULLANTENNA NONE</code></strong> (generic null antenna).</li>
+</ul></li>
+<li><strong>Altura da Antena (Antenna Height):</strong>
+<ul>
+<li>The height entered here must be measured vertically from the physical ground mark to the <strong>Antenna Reference Point (ARP)</strong>.</li>
+<li><strong>If <code>EML_REACH_RS2</code> is selected:</strong> Enter your measured survey pole/tripod height (e.g., <code>2.000</code> m). The IBGE calibration table will apply the internal <span class="math inline">\(0.134\text{ m}\)</span> phase center offset automatically.</li>
+<li><strong>If <code>ADVNULLANTENNA</code> is selected:</strong> A null antenna has no internal offset table (<span class="math inline">\(0\text{ mm}\)</span>). You must manually add the Reach RS2 phase center offset (<span class="math inline">\(0.134\text{ m}\)</span>) to your measured pole height (<span class="math inline">\(2.000 + 0.134 = \mathbf{2.134\text{ m}}\)</span>) so that your final coordinates represent the ground marker!</li>
+</ul></li>
+<li><strong>Tipo de Medição (Measurement Type):</strong>
+<ul>
+<li>Select <strong>Vertical</strong> (height measured straight along the plumb line).</li>
+</ul></li>
+<li><strong>Arquivo de Observação (Observation File):</strong>
+<ul>
+<li>Click <strong>Choose File</strong> and select your 30-second decimated RINEX file (e.g., <code>rover_30s.26o</code> or a <code>.zip</code> containing it).</li>
+</ul></li>
+<li>Click <strong>Processar</strong> (Process).</li>
+</ol>
+<hr>
+</section>
+<section id="step-3-retrieving-results" class="level3" data-number="5.3.3">
+<h3 data-number="5.3.3" class="anchored" data-anchor-id="step-3-retrieving-results"><span class="header-section-number">5.3.3</span> Step 3: Retrieving Results</h3>
+<p>The browser redirects to a confirmation page displaying a real-time progress monitor: 1. File upload and integrity check. 2. Atmospheric model and ephemeris matching. 3. Least-squares / Kalman filter convergence. 4. Final PDF and coordinate package generation.</p>
+<p>Once processing completes (typically 30 seconds to 2 minutes), a direct download link appears, and an email is delivered with the attached results archive (<code>.zip</code>).</p>
+<hr>
+</section>
+</section>
+<section id="decoding-the-ibge-ppp-pdf-report" class="level2" data-number="5.4">
+<h2 data-number="5.4" class="anchored" data-anchor-id="decoding-the-ibge-ppp-pdf-report"><span class="header-section-number">5.4</span> Decoding the IBGE PPP PDF Report</h2>
+<p>Extract the downloaded ZIP file. The primary deliverable is the executive geodetic summary: <code>[filename].pdf</code>.</p>
+<p>Below is an annotated breakdown of each critical section of the IBGE report:</p>
+<section id="section-1-processing-metadata" class="level3" data-number="5.4.1">
+<h3 data-number="5.4.1" class="anchored" data-anchor-id="section-1-processing-metadata"><span class="header-section-number">5.4.1</span> Section 1: Processing Metadata</h3>
+<pre><code>========================================================================
+RESULTADOS DO PROCESSAMENTO - IBGE PPP
+========================================================================
+Arquivo de Observação:        rover_30s.26o
+Início do Rastreio:           2026-03-16 12:05:00.00 UTC
+Fim do Rastreio:              2026-03-16 16:05:00.00 UTC
+Duração do Rastreio:          04h 00m 00s
+Intervalo de Coleta:          30.0 s
+Órbitas Utilizadas:           IGS Final (ou IGR Rápida)
+========================================================================</code></pre>
+<ul>
+<li><strong>Duração (Duration):</strong> Confirms total static occupation time. For centimeter precision, ensure duration is <span class="math inline">\(\ge 2\text{ to }4\text{ hours}\)</span>.</li>
+<li><strong>Órbitas (Orbits):</strong> Confirms whether <code>Final</code> or <code>Rápida</code> orbits were applied.</li>
+</ul>
+<hr>
+</section>
+<section id="section-2-coordinates-in-sirgas2000-measurement-epoch-vs.-epoch-2000.4" class="level3" data-number="5.4.2">
+<h3 data-number="5.4.2" class="anchored" data-anchor-id="section-2-coordinates-in-sirgas2000-measurement-epoch-vs.-epoch-2000.4"><span class="header-section-number">5.4.2</span> Section 2: Coordinates in SIRGAS2000 (Measurement Epoch vs.&nbsp;Epoch 2000.4)</h3>
+<p>The report presents coordinates in two distinct reference epochs:</p>
+<pre><code>========================================================================
+COORDENADAS GEODÉSICAS (SISTEMA DE REFERÊNCIA: SIRGAS2000)
+========================================================================
+1. NA ÉPOCA DA COLETA (2026-03-16):
+   Latitude (phi):     -03° 08' 24.12845" S  +/- 0.006 m
+   Longitude (lambda): -60° 05' 42.89120" W  +/- 0.008 m
+   Altitude Elipsoidal (h):  84.312 m        +/- 0.015 m
+
+2. NA ÉPOCA OFICIAL SIRGAS2000 (2000.4):
+   Latitude (phi):     -03° 08' 24.11620" S  +/- 0.006 m
+   Longitude (lambda): -60° 05' 42.90240" W  +/- 0.008 m
+   Altitude Elipsoidal (h):  84.310 m        +/- 0.015 m
+========================================================================</code></pre>
+<div class="callout callout-style-default callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Important</span>Which Coordinates Should You Use in Your Thesis or Paper?
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<ul>
+<li><strong>Use Epoch 2000.4</strong> if you are integrating your GNSS data with official Brazilian cartography, INCRA land registries, IBGE vector layers, or comparing against historical benchmarks.</li>
+<li><strong>Use Epoch of Collection</strong> if you are conducting precise real-time kinematic velocity studies or calculating baseline vectors directly with local instruments measured in the same week.</li>
+<li>Always explicitly state the reference epoch in your methods section (e.g., <em>“Coordinates were determined in SIRGAS2000 (epoch 2000.4) via IBGE PPP”</em>).</li>
+</ul>
+</div>
+</div>
+<hr>
+</section>
+<section id="section-3-physical-elevation-orthometric-height-via-mapgeo2015" class="level3" data-number="5.4.3">
+<h3 data-number="5.4.3" class="anchored" data-anchor-id="section-3-physical-elevation-orthometric-height-via-mapgeo2015"><span class="header-section-number">5.4.3</span> Section 3: Physical Elevation (Orthometric Height via MAPGEO2015)</h3>
+<p>Directly beneath the geodetic coordinates, the report provides the vertical datum solution:</p>
+<pre><code>========================================================================
+ALTITUDE ORTOMÉTRICA (REFERÊNCIA VERTICAL: IMBITUBA / MAPGEO2015)
+========================================================================
+Altitude Elipsoidal (h):     84.310 m
+Ondulação Geoidal (N):       28.450 m  (Modelo MAPGEO2015)
+Altitude Ortométrica (H):    55.860 m  (H = h - N)
+========================================================================</code></pre>
+<ul>
+<li><strong>Altitude Elipsoidal (<span class="math inline">\(h\)</span>):</strong> The raw geometric height above the GRS80 ellipsoid (<span class="math inline">\(84.310\text{ m}\)</span>).</li>
+<li><strong>Ondulação Geoidal (<span class="math inline">\(N\)</span>):</strong> The geoid separation interpolated from the official IBGE national geoid model MAPGEO2015 (<span class="math inline">\(+28.450\text{ m}\)</span>).</li>
+<li><strong>Altitude Ortométrica (<span class="math inline">\(H\)</span>):</strong> Your true ground elevation above mean sea level (<span class="math inline">\(55.860\text{ m}\)</span>). <strong>This is the elevation to report for hydrologic, ecological, and topographical research.</strong></li>
+</ul>
+<hr>
+</section>
+<section id="section-4-precision-and-confidence-metrics" class="level3" data-number="5.4.4">
+<h3 data-number="5.4.4" class="anchored" data-anchor-id="section-4-precision-and-confidence-metrics"><span class="header-section-number">5.4.4</span> Section 4: Precision and Confidence Metrics</h3>
+<p>The final table of the report provides 95% formal confidence intervals (<span class="math inline">\(\approx 2\sigma\)</span>):</p>
+<pre><code>========================================================================
+PRECISÃO FORMAL (NÍVEL DE CONFIANÇA DE 95%)
+========================================================================
+Sigma Latitude (Norte):      0.006 m  (6 mm)
+Sigma Longitude (Leste):     0.008 m  (8 mm)
+Sigma Altitude (Vertical):   0.015 m  (15 mm)
+========================================================================</code></pre>
+</section>
+<section id="publication-acceptance-thresholds" class="level3" data-number="5.4.5">
+<h3 data-number="5.4.5" class="anchored" data-anchor-id="publication-acceptance-thresholds"><span class="header-section-number">5.4.5</span> Publication Acceptance Thresholds</h3>
+<p>How do you know if your static PPP result is good enough to publish?</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Parameter</th>
+<th>Excellent (Publishable Geodetic Control)</th>
+<th>Acceptable (Environmental Mapping)</th>
+<th>Suspect (Re-survey Required)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Static Duration</strong></td>
+<td><span class="math inline">\(&gt; 4\text{ hours}\)</span></td>
+<td><span class="math inline">\(2\text{ to }4\text{ hours}\)</span></td>
+<td><span class="math inline">\(&lt; 1.5\text{ hours}\)</span></td>
+</tr>
+<tr class="even">
+<td><strong>Horizontal 95% Error</strong></td>
+<td><span class="math inline">\(&lt; 0.015\text{ m}\)</span> (<span class="math inline">\(1.5\text{ cm}\)</span>)</td>
+<td><span class="math inline">\(0.015\text{ to }0.050\text{ m}\)</span></td>
+<td><span class="math inline">\(&gt; 0.050\text{ m}\)</span> (<span class="math inline">\(5\text{ cm}\)</span>)</td>
+</tr>
+<tr class="odd">
+<td><strong>Vertical 95% Error</strong></td>
+<td><span class="math inline">\(&lt; 0.030\text{ m}\)</span> (<span class="math inline">\(3.0\text{ cm}\)</span>)</td>
+<td><span class="math inline">\(0.030\text{ to }0.080\text{ m}\)</span></td>
+<td><span class="math inline">\(&gt; 0.080\text{ m}\)</span> (<span class="math inline">\(8\text{ cm}\)</span>)</td>
+</tr>
+<tr class="even">
+<td><strong>Carrier Phase Residual RMS</strong></td>
+<td><span class="math inline">\(&lt; 0.010\text{ m}\)</span></td>
+<td><span class="math inline">\(0.010\text{ to }0.020\text{ m}\)</span></td>
+<td><span class="math inline">\(&gt; 0.025\text{ m}\)</span> (Severe multipath)</td>
+</tr>
+</tbody>
+</table>
+<p>If your results fall within the “Excellent” or “Acceptable” tiers, your coordinates can serve as a dependable local base station for subsequent PPK surveying across your field site.</p>
+<hr>
+</section>
+</section>
+</section>
+<section id="sec-troubleshooting" class="level1" data-number="6">
+<h1 data-number="6"><span class="header-section-number">6</span> Troubleshooting, Practical Pitfalls, and Field Checklist</h1>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>Purpose of this Chapter
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Field geodetic processing rarely succeeds on the very first try without encountering at least one software warning, file format rejection, or ambiguous solution flag. This chapter synthesizes the most frequent failure points encountered by graduate researchers and provides concrete, step-by-step diagnostic workflows to resolve them.</p>
+</div>
+</div>
+<section id="the-four-most-common-pitfalls-and-how-to-fix-them" class="level2" data-number="6.1">
+<h2 data-number="6.1" class="anchored" data-anchor-id="the-four-most-common-pitfalls-and-how-to-fix-them"><span class="header-section-number">6.1</span> The Four Most Common Pitfalls and How to Fix Them</h2>
+<section id="pitfall-1-the-float-only-trap-in-emlid-studio" class="level3" data-number="6.1.1">
+<h3 data-number="6.1.1" class="anchored" data-anchor-id="pitfall-1-the-float-only-trap-in-emlid-studio"><span class="header-section-number">6.1.1</span> Pitfall 1: The “Float-Only” Trap in Emlid Studio</h3>
+<p><strong>Symptom:</strong> You run PPK processing in Emlid Studio, and the entire solution track is yellow (Float) with 0% or &lt;10% Fix rate.</p>
+<div class="cell" data-layout-align="default">
+<div class="cell-output-display">
+<div>
+<p></p><figure class="figure"><p></p>
+<div>
+<pre class="mermaid mermaid-js">flowchart TD
+    A[Float Solution Trap&lt;br/&gt;Ambiguities Unresolved] --&gt; B{Is Baseline to RBMC &gt; 80 km?}
+    B -- Yes --&gt; C[Baseline too long for single-baseline PPK&lt;br/&gt;Switch to Static IBGE PPP]
+    B -- No --&gt; D{Was Survey Under Heavy Canopy?}
+    D -- Yes --&gt; E[Severe cycle slips &amp; signal attenuation&lt;br/&gt;Tune SNR/Elevation masks or use canopy opening]
+    D -- No --&gt; F{Did you supply a valid NAV file?}
+    F -- No --&gt; G[Add matching .nav broadcast ephemeris]
+    F -- Yes --&gt; H[Check time overlap between Base and Rover]
+</pre>
+</div>
+<p></p></figure><p></p>
+</div>
+</div>
+</div>
+<p><strong>Root Causes &amp; Solutions:</strong> 1. <strong>Baseline Distance Exceeded:</strong> If your study site is more than <span class="math inline">\(70\text{ to }100\text{ km}\)</span> from the nearest active IBGE RBMC station, ionospheric divergence between base and rover prevents the integer ambiguity filter from resolving.<br>
+- <strong>Fix:</strong> If your Reach RS2 was logged statically for <span class="math inline">\(\ge 2\text{ hours}\)</span>, abandon PPK and process the file via <strong>IBGE PPP</strong> instead (<a href="#sec-ibge-ppp" class="quarto-xref">Section&nbsp;5</a>). 2. <strong>Dense Forest Canopy:</strong> Neotropical rainforest canopies attenuate L-band microwave signals and induce frequent cycle slips. - <strong>Fix:</strong> In Emlid Studio Settings (gear icon), change Ambiguity Resolution from <code>Fix and Hold</code> to <code>Continuous</code>. Increase the <strong>SNR Mask</strong> from <code>35 dB-Hz</code> to <code>38 dB-Hz</code> to filter out canopy-scattered noise. 3. <strong>No Time Overlap:</strong> The base and rover logs did not record at the same time (e.g., timezone mismatch between local UTC-4 / UTC-3 and satellite GPST). - <strong>Fix:</strong> Inspect the time stamps in both RINEX files. Both receivers must be logging concurrently.</p>
+<hr>
+</section>
+<section id="pitfall-2-rbmc-file-ingestion-errors-0-valid-epochs" class="level3" data-number="6.1.2">
+<h3 data-number="6.1.2" class="anchored" data-anchor-id="pitfall-2-rbmc-file-ingestion-errors-0-valid-epochs"><span class="header-section-number">6.1.2</span> Pitfall 2: RBMC File Ingestion Errors (“0 Valid Epochs”)</h3>
+<p><strong>Symptom:</strong> You drag your downloaded IBGE RBMC file into Emlid Studio or RTKCONV, but the software shows an error, hangs, or reports “0 valid observation epochs”.</p>
+<p><strong>Root Cause:</strong> You loaded a <strong>Hatanaka-compressed file</strong> (<code>.crx</code> or <code>.26d</code>) directly without decompressing it first.</p>
+<p><strong>Fix:</strong> 1. As explained in <a href="#sec-ibge-rbmc" class="quarto-xref">Section&nbsp;2</a>, verify the file extension. 2. If the file ends in <code>d</code> (e.g., <code>base0750.26d</code>), run: <code>powershell    .\CRX2RNX.exe .\base0750.26d</code> 3. Load the resulting <code>base0750.26o</code> file into Emlid Studio.</p>
+<hr>
+</section>
+<section id="pitfall-3-ibge-ppp-file-rejection" class="level3" data-number="6.1.3">
+<h3 data-number="6.1.3" class="anchored" data-anchor-id="pitfall-3-ibge-ppp-file-rejection"><span class="header-section-number">6.1.3</span> Pitfall 3: IBGE PPP File Rejection</h3>
+<p><strong>Symptom:</strong> Upon submitting your RINEX file to the IBGE PPP portal, the web interface returns an error: - <em>“Arquivo com intervalo de amostragem inadequado”</em> - <em>“Duração insuficiente de rastreio”</em> - <em>“Erro na leitura dos cabeçalhos RINEX”</em></p>
+<p><strong>Root Causes &amp; Solutions:</strong></p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>IBGE PPP Error Message</th>
+<th>Root Cause</th>
+<th>Immediate Fix</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Intervalo inadequado</strong></td>
+<td>High-rate file (1 Hz or 5 Hz) submitted directly.</td>
+<td>Open RTKCONV, set <strong>Time Interval = 30 s</strong>, and re-export (<a href="#sec-rtklib-prep" class="quarto-xref">Section&nbsp;4</a>).</td>
+</tr>
+<tr class="even">
+<td><strong>Duração insuficiente</strong></td>
+<td>Observation session was <span class="math inline">\(&lt; 1\text{ hour}\)</span>.</td>
+<td>Static PPP requires at least 1–2 hours for convergence; 4+ hours is recommended. Re-survey or use PPK.</td>
+</tr>
+<tr class="odd">
+<td><strong>Erro de cabeçalho</strong></td>
+<td>Special characters or accented Portuguese letters (ex: <code>Estação_Água</code>) in marker name.</td>
+<td>Open the <code>.obs</code> file in Notepad++ and edit <code>MARKER NAME</code> to use plain ASCII alphanumeric characters only (e.g., <code>BASE01</code>).</td>
+</tr>
+<tr class="even">
+<td><strong>Formato incompatível</strong></td>
+<td>Incomplete RINEX 3 multi-constellation header syntax.</td>
+<td>Convert to <strong>RINEX Version 2.11</strong> using RTKCONV (<a href="#sec-rtklib-prep" class="quarto-xref">Section&nbsp;4</a>).</td>
+</tr>
+</tbody>
+</table>
+<hr>
+</section>
+<section id="pitfall-4-the-134-mm-height-offset-error" class="level3" data-number="6.1.4">
+<h3 data-number="6.1.4" class="anchored" data-anchor-id="pitfall-4-the-134-mm-height-offset-error"><span class="header-section-number">6.1.4</span> Pitfall 4: The 134 mm Height Offset Error</h3>
+<p><strong>Symptom:</strong> Your horizontal coordinates match historical maps, but your calculated elevation is approximately <span class="math inline">\(13.4\text{ cm}\)</span> too high or too low.</p>
+<p><strong>Root Cause:</strong> Double-counting or omitting the internal Antenna Phase Center Offset (PCO) of the Reach RS2 (<span class="math inline">\(0.134\text{ m}\)</span>).</p>
+<p><strong>Quick Reference Guide: Where to Enter Antenna Heights</strong></p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+<col style="width: 25%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Software / Service</th>
+<th>Antenna Model Selected</th>
+<th>Value to Enter in Height Box</th>
+<th>Software Action</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><strong>Emlid Studio</strong></td>
+<td><code>Reach RS2</code></td>
+<td><strong>Measured pole height</strong> (e.g., <code>2.000</code> m)</td>
+<td>Emlid Studio automatically adds <span class="math inline">\(+0.134\text{ m}\)</span> internally.</td>
+</tr>
+<tr class="even">
+<td><strong>IBGE PPP</strong></td>
+<td><code>EML_REACH_RS2 NONE</code></td>
+<td><strong>Measured pole height</strong> (e.g., <code>2.000</code> m)</td>
+<td>IBGE calibration table applies the <span class="math inline">\(+0.134\text{ m}\)</span> PCO internally.</td>
+</tr>
+<tr class="odd">
+<td><strong>IBGE PPP</strong></td>
+<td><code>ADVNULLANTENNA NONE</code></td>
+<td><strong>Pole height + 0.134 m</strong> (e.g., <code>2.134</code> m)</td>
+<td>Null antenna has 0 offset; you must add the <span class="math inline">\(0.134\text{ m}\)</span> offset yourself!</td>
+</tr>
+</tbody>
+</table>
+<hr>
+</section>
+</section>
+<section id="field-protocol-checklist-for-flawless-post-processing" class="level2" data-number="6.2">
+<h2 data-number="6.2" class="anchored" data-anchor-id="field-protocol-checklist-for-flawless-post-processing"><span class="header-section-number">6.2</span> Field Protocol Checklist for Flawless Post-Processing</h2>
+<p>Print or save this checklist before heading into remote field campaigns:</p>
+<section id="pre-field-preparation" class="level3" data-number="6.2.1">
+<h3 data-number="6.2.1" class="anchored" data-anchor-id="pre-field-preparation"><span class="header-section-number">6.2.1</span> 1. Pre-Field Preparation</h3>
+<ul class="task-list">
+<li><label><input type="checkbox"><strong>Firmware Update:</strong> Ensure Emlid Reach RS2 receiver is updated to the latest stable firmware via Emlid Flow.</label></li>
+<li><label><input type="checkbox"><strong>Logging Configuration:</strong></label>
+<ul>
+<li>Raw logging enabled: Set to record raw <code>UBX</code> or <code>RINEX 2.11</code>.</li>
+<li>Constellations: Enable <strong>GPS + GLONASS + Galileo + BeiDou</strong>.</li>
+<li>Sampling Rate: <span class="math inline">\(1\text{ Hz}\)</span> or <span class="math inline">\(5\text{ Hz}\)</span> for mobile/kinematic; <span class="math inline">\(1\text{ Hz}\)</span> or <span class="math inline">\(5\text{ s}\)</span> for static base logging.</li>
+</ul></li>
+<li><label><input type="checkbox"><strong>Battery &amp; Storage:</strong> Fully charge the receiver internal battery and verify <span class="math inline">\(\ge 8\text{ GB}\)</span> of free internal storage.</label></li>
+<li><label><input type="checkbox"><strong>Hardware Check:</strong> Verify survey pole bubble level is calibrated; check that tripod optical plummet or tribrach is adjusted.</label></li>
+</ul>
+</section>
+<section id="during-field-survey" class="level3" data-number="6.2.2">
+<h3 data-number="6.2.2" class="anchored" data-anchor-id="during-field-survey"><span class="header-section-number">6.2.2</span> 2. During Field Survey</h3>
+<ul class="task-list">
+<li><label><input type="checkbox"><strong>Rigid Monumentation:</strong> Firmly seat the tripod or survey rod over the benchmark. Ensure no settling into soft wetland mud during long occupations.</label></li>
+<li><label><input type="checkbox"><strong>Measure Antenna Height:</strong> Measure the vertical distance from the top of the benchmark to the bottom of the Reach RS2 brass 5/8” thread (ARP). <strong>Record this number immediately in your physical field notebook</strong>.</label></li>
+<li><label><input type="checkbox"><strong>Clear Sky View:</strong> Whenever possible, set up static control points away from large tree trunks, overhanging branches, tin roofs, and standing water to prevent severe multipath.</label></li>
+<li><label><input type="checkbox"><strong>Minimum Duration:</strong></label>
+<ul>
+<li>If establishing a base point for <strong>IBGE PPP:</strong> Log continuously for <strong>at least 2 to 4 hours</strong>.</li>
+<li>If running <strong>PPK rover points:</strong> Maintain at least <strong>15 to 30 continuous minutes</strong> per point if under partial canopy.</li>
+</ul></li>
+</ul>
+</section>
+<section id="post-field-data-management" class="level3" data-number="6.2.3">
+<h3 data-number="6.2.3" class="anchored" data-anchor-id="post-field-data-management"><span class="header-section-number">6.2.3</span> 3. Post-Field Data Management</h3>
+<ul class="task-list">
+<li><label><input type="checkbox"><strong>Download Raw Logs:</strong> Transfer raw <code>.UBX</code> files to your laptop immediately upon returning to basecamp.</label></li>
+<li><label><input type="checkbox"><strong>Zone C Archiving:</strong> Duplicate raw logs into a dedicated, read-only backup directory (e.g., <code>data/raw/</code>) before opening or converting them in any software.</label></li>
+<li><label><input type="checkbox"><strong>Station Report Verification:</strong> Download the official IBGE station description PDF for the reference station and record its official SIRGAS2000 coordinates.</label></li>
+<li><label><input type="checkbox"><strong>Documentation:</strong> Record your final coordinates, reference frame epoch (2000.4 vs.&nbsp;survey epoch), and orthometric elevation (<span class="math inline">\(H\)</span>) in your project database.</label></li>
+</ul>
+</section>
+</section>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+<script src="index_files/libs/quarto-html/zenscroll-min.js"></script>
+</body></html>
