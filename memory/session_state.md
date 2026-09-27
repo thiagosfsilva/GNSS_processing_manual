@@ -5,7 +5,7 @@ metadata:
   type: project
 ---
 
-**Last updated:** 2026-09-22 by antigravity, after configuring Quarto and RStudio project settings for dual HTML and PDF builds.
+**Last updated:** 2026-09-27 by antigravity, after creating the public GitHub repository and deploying to GitHub Pages.
 
 ## Where things stand
 
@@ -22,16 +22,15 @@ metadata:
   - `sections/06_troubleshooting_faqs.qmd`: Float trap diagnostics, RBMC ingestion errors, PPP rejection causes, antenna height offset summary table, field protocol checklist.
 - **Phase 5 (Master Document & Compilation):** COMPLETE (verified with dual HTML & PDF compilation).
   - `index.qmd`: Master document assembling all sections without local format overrides.
-  - `_quarto.yml`: Configured with explicit `render: [index.qmd]`, preventing Quarto and RStudio from ingesting repository `.md` files or compiling individual chapter `.qmd`s as standalone documents. Configured dual `html` (Cosmo theme, Mermaid) and `pdf` (LuaLaTeX / TinyTeX, A4, KOMA-Script) formats.
-  - `GNSS_processing_manual.Rproj`: RStudio project root configured; clicking "Render Project" in RStudio's Build tab compiles both `_site/index.html` and `_site/index.pdf` cleanly.
-  - `.gitignore`: Updated with `*.tex` and `.Rhistory`.
+  - `_quarto.yml`: Configured with explicit `render: [index.qmd]`, dual `html` and `pdf` formats.
+  - `GNSS_processing_manual.Rproj`: RStudio project root configured.
+- **Phase 6 (GitHub Deployment & CI/CD):** COMPLETE.
+  - Public GitHub repository: [thiagosfsilva/GNSS_processing_manual](https://github.com/thiagosfsilva/GNSS_processing_manual).
+  - Default branch: `main`.
+  - Live GitHub Pages site: [https://thiagosfsilva.github.io/GNSS_processing_manual/](https://thiagosfsilva.github.io/GNSS_processing_manual/) deployed via `quarto publish gh-pages`.
+  - Automated CI/CD: `.github/workflows/quarto-publish.yml` triggers automated render and deploy on pushes to `main`.
 
 ## Immediate next action
 
-User review in RStudio: test clicking "Render Project" in the Build tab.
-
-## Next, in order
-
-1. User review of the manual content and pedagogical flow in HTML and PDF.
-2. Initial Git commit of the scaffolded repository and RStudio integration (Zone A assets).
+Manual is live. Periodic maintenance or content updates as research workflows evolve.
 

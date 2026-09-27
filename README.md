@@ -1,4 +1,6 @@
-# GNSS Post-Processing Manual: Field-to-Coordinates Guide for Researchers
+# Post-Processing GNSS Acquisitions in Brazil: A Practical Guide
+
+**Live Web Manual:** [https://thiagosfsilva.github.io/GNSS_processing_manual/](https://thiagosfsilva.github.io/GNSS_processing_manual/)
 
 A comprehensive, pedagogical manual in English on post-processing GNSS acquisitions, designed specifically for graduate students, postdocs, and environmental researchers in ecology and remote sensing who have not performed geodetic post-processing before.
 
